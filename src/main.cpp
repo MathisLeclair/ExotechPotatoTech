@@ -120,17 +120,17 @@ void findPath(int x, int y)
 {
     cout << "findPath START" << endl;
     clearHistory();
-    auto currentPos = gladiator->robot->getData().position;
-    const MazeSquare *start = maze[(int)currentPos.x][(int)currentPos.y];
+    const MazeSquare *start = gladiator->maze->getNearestSquare();
     const MazeSquare *square;
     const MazeSquare *depopSquare;
     const MazeSquare *goal = maze[x][y];
 
     const MazeSquare **qstart = q;
     const MazeSquare **qend = q + 1;
-    q[0] = start;
+    *q = start;
     while (qstart != qend)
     {
+        cout << "searching" << endl;
         depopSquare = *qstart;
         qstart++;
         square = depopSquare->eastSquare;
@@ -172,6 +172,7 @@ void findPath(int x, int y)
         }
     }
 
+    cout << "set q to result" << endl;
     if (qstart != qend)
     {
         qstart = q;
@@ -211,6 +212,8 @@ void init()
         for (int y = 0; y < 12; y++)
             maze[y][x] = gladiator->maze->getSquare(y, x);
     findPath(11, 11);
+    for (path = q; *path != nullptr; path++)
+        cout << "path: " << (*path)->i << " " << (*path)->j << endl;
     path = q;
     initiated = true;
     cout << "init END" << endl;
