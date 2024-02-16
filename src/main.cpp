@@ -125,46 +125,50 @@ void findPath(int x, int y)
     const MazeSquare *depopSquare;
     const MazeSquare *goal = maze[x][y];
 
+    cout << "findPath setting" << endl;
     const MazeSquare **qstart = q;
     const MazeSquare **qend = q + 1;
     *q = start;
     while (qstart != qend)
     {
-        cout << "searching" << endl;
+        cout << "findPath searching" << endl;
         depopSquare = *qstart;
         qstart++;
+        cout << "findPath east" << endl;
         square = depopSquare->eastSquare;
-        Serial.println(square->i, square->j);
         if (square && !history[square->i][square->j])
         {
-            qend = &square;
+            *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
             if (square == goal)
                 break;
         }
+        cout << "findPath west" << endl;
         square = depopSquare->westSquare;
         if (square && !history[square->i][square->j])
         {
-            qend = &square;
+            *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
             if (square == goal)
                 break;
         }
+        cout << "findPath south" << endl;
         square = depopSquare->southSquare;
         if (square && !history[square->i][square->j])
         {
-            qend = &square;
+            *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
             if (square == goal)
                 break;
         }
+        cout << "findPath north" << endl;
         square = depopSquare->northSquare;
         if (square && !history[square->i][square->j])
         {
-            qend = &square;
+            *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
             if (square == goal)
