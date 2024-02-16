@@ -181,7 +181,6 @@ list<const MazeSquare *> findPath(int x, int y)
     }
     cout << "findPath END" << endl;
     return result;
-    cout << "findPath END" << endl;
 }
 
 void followPath(list<const MazeSquare *> path)
@@ -214,8 +213,8 @@ void init()
     path = findPath(11, 11);
     cout << "Path item list:" << endl;
     // gladiator->log("Path item list:");
-    // for (list<MazeSquare *>::iterator it = path.begin(); it != path.end(); ++it)
-    //     cout << "Path item: " << (*it)->i << " " << (*it)->j << endl;
+    for (list<const MazeSquare *>::iterator it = path.begin(); it != path.end(); ++it)
+        cout << "Path item: " << (*it)->i << " " << (*it)->j << endl;
         // gladiator->log("Path item %d %d", (*it)->i, (*it)->j);
 
     initiated = true;
