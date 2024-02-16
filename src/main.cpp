@@ -119,7 +119,6 @@ list<const MazeSquare *> findPath(int x, int y)
 {
     cout << "findPath START" << endl;
     clearHistory();
-    bool stop = false;
     auto currentPos = gladiator->robot->getData().position;
     const MazeSquare *start = maze[(int)currentPos.x][(int)currentPos.y];
     const MazeSquare *square;
@@ -129,7 +128,7 @@ list<const MazeSquare *> findPath(int x, int y)
     list<const MazeSquare *> q;
     q.push_back(start);
     cout << "HEY" << endl;
-    while (q.size() != 0 && stop)
+    while (q.size() != 0)
     {
         depopSquare = q.front();
         q.pop_front();
@@ -209,7 +208,11 @@ void init()
     cout << "init START" << endl;
     for (int x = 0; x < 12; x++)
         for (int y = 0; y < 12; y++)
-            maze[y][x] = gladiator->maze->getSquare(y, x);
+        {
+            const MazeSquare *elem = gladiator->maze->getSquare(y, x);
+            cout << "Maze square: " << elem << endl;
+            maze[y][x] = elem;
+        }
     path = findPath(11, 11);
     cout << "Path item list:" << endl;
     // gladiator->log("Path item list:");
@@ -234,13 +237,13 @@ void setup()
 
 void loop()
 {
-    cout << "loop START" << endl;
+    // cout << "loop START" << endl;
     if (gladiator->game->isStarted())
     {
         if (!initiated)
             init();
         followPath(path);
     }
-    cout << "loop END" << endl;
+    // cout << "loop END" << endl;
     delay(100); // boucle à 100Hz
 }
