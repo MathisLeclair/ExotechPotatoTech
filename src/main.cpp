@@ -117,6 +117,7 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs)
 
 list<const MazeSquare *> findPath(int x, int y)
 {
+    cout << "findPath START" << endl;
     clearHistory();
     bool stop = false;
     auto currentPos = gladiator->robot->getData().position;
@@ -168,6 +169,7 @@ list<const MazeSquare *> findPath(int x, int y)
     list<const MazeSquare *> result;
     if (q.size() != 0)
     {
+        cout << "create result" << endl;
         cout << goal->i << goal->j << endl;
         result.push_back(goal);
         while (square != start)
@@ -178,10 +180,12 @@ list<const MazeSquare *> findPath(int x, int y)
         }
     }
     return result;
+    cout << "findPath END" << endl;
 }
 
 void followPath(list<const MazeSquare *> path)
 {
+    cout << "followPath START" << endl;
     if (maze[(int)(gladiator->robot->getData().position.x)][(int)(gladiator->robot->getData().position.y)] == path.front())
         path.pop_front();
     if (path.size() == 0)
@@ -190,40 +194,53 @@ void followPath(list<const MazeSquare *> path)
     float y = ((float)(path.front()->j) + 0.5) / 4.0;
     Vector2 pathToAim{x, y};
     aim(gladiator, pathToAim, false);
+    cout << "followPath END" << endl;
 }
 
 list<const MazeSquare *> path;
 void reset()
 {
-    gladiator->log("init");
+    cout << "reset" << endl;
     initiated = false;
 }
 
 void init()
 {
+    cout << "init START" << endl;
     for (int x = 0; x < 12; x++)
         for (int y = 0; y < 12; y++)
             maze[y][x] = gladiator->maze->getSquare(y, x);
     path = findPath(11, 11);
+    cout << "Path item list:" << endl;
+    // gladiator->log("Path item list:");
+    for (list<MazeSquare *>::iterator it = path.begin(); it != path.end(); ++it)
+        cout << "Path item: " << (*it)->i << " " << (*it)->j << endl;
+        // gladiator->log("Path item %d %d", (*it)->i, (*it)->j);
+
     initiated = true;
+    cout << "init END" << endl;
 }
 
 void setup()
 {
+    cout << "setup START" << endl;
     // instanciation de l'objet gladiator
     gladiator = new Gladiator();
     // enregistrement de la fonction de reset qui s'éxecute à chaque fois avant qu'une partie commence
     gladiator->game->onReset(&reset);
     // gladiator->game->enableFreeMode(RemoteMode::ON);
+    cout << "setup END" << endl;
 }
 
 void loop()
 {
+    cout << "loop START" << endl;
     if (gladiator->game->isStarted())
     {
         if (!initiated)
             init();
         followPath(path);
     }
-    delay(10); // boucle à 100Hz
+    cout << "loop END" << endl;
+    delay(100); // boucle à 100Hz
 }
