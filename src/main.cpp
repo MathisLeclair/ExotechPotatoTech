@@ -1,7 +1,5 @@
 #include "gladiator.h"
 #include <cmath>
-#include <list>
-#undef abs
 
 // x,y représentent des coordonnées en m
 // Vector{1.5,1.5} représente le point central
@@ -16,7 +14,7 @@ public:
     Vector2() : _x(0.), _y(0.) {}
     Vector2(float x, float y) : _x(x), _y(y) {}
 
-    float norm1() const { return std::abs(_x) + std::abs(_y); }
+    float norm1() const { return abs(_x) + abs(_y); }
     float norm2() const { return std::sqrt(_x * _x + _y * _y); }
     void normalize()
     {
@@ -34,7 +32,7 @@ public:
     Vector2 operator+(const Vector2 &other) const { return {_x + other._x, _y + other._y}; }
     Vector2 operator*(float f) const { return {_x * f, _y * f}; }
 
-    bool operator==(const Vector2 &other) const { return std::abs(_x - other._x) < 1e-5 && std::abs(_y - other._y) < 1e-5; }
+    bool operator==(const Vector2 &other) const { return abs(_x - other._x) < 1e-5 && abs(_y - other._y) < 1e-5; }
     bool operator!=(const Vector2 &other) const { return !(*this == other); }
 
     float x() const { return _x; }
@@ -89,9 +87,9 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs)
     {
         targetReached = true;
     }
-    else if (std::abs(angleError) > ANGLE_REACHED_THRESHOLD)
+    else if (abs(angleError) > ANGLE_REACHED_THRESHOLD)
     {
-        float factor = 0.2;
+        float factor = 0.1;
         if (angleError < 0)
             factor = -factor;
         rightCommand = factor;
@@ -109,7 +107,7 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs)
 
     if (showLogs || targetReached)
     {
-        gladiator->log("ta %f, ca %f, ea %f, tx %f cx %f ex %f ty %f cy %f ey %f", targetAngle, posRaw.a, angleError, target.x(), pos.x(), posError.x(), target.y(), pos.y(), posError.y());
+        // gladiator->log("ta %f, ca %f, ea %f, tx %f cx %f ex %f ty %f cy %f ey %f", targetAngle, posRaw.a, angleError, target.x(), pos.x(), posError.x(), target.y(), pos.y(), posError.y());
     }
 
     return targetReached;
@@ -119,23 +117,23 @@ const MazeSquare *q[144];
 const MazeSquare **path;
 void findPath(int x, int y)
 {
-    cout << "findPath START" << endl;
+    // cout << "findPath START" << endl;
     clearHistory();
     const MazeSquare *start = gladiator->maze->getNearestSquare();
     const MazeSquare *square;
     const MazeSquare *depopSquare;
     const MazeSquare *goal = maze[x][y];
 
-    cout << "findPath setting" << endl;
+    // cout << "findPath setting" << endl;
     const MazeSquare **qstart = q;
     const MazeSquare **qend = q + 1;
     *q = start;
     while (qstart != qend)
     {
-        cout << "findPath searching" << endl;
+        // cout << "findPath searching" << endl;
         depopSquare = *qstart;
         qstart++;
-        cout << "findPath east" << endl;
+        // cout << "findPath east" << endl;
         square = depopSquare->eastSquare;
         if (square && !history[square->i][square->j])
         {
@@ -145,7 +143,7 @@ void findPath(int x, int y)
             if (square == goal)
                 break;
         }
-        cout << "findPath west" << endl;
+        // cout << "findPath west" << endl;
         square = depopSquare->westSquare;
         if (square && !history[square->i][square->j])
         {
@@ -155,7 +153,7 @@ void findPath(int x, int y)
             if (square == goal)
                 break;
         }
-        cout << "findPath south" << endl;
+        // cout << "findPath south" << endl;
         square = depopSquare->southSquare;
         if (square && !history[square->i][square->j])
         {
@@ -165,7 +163,7 @@ void findPath(int x, int y)
             if (square == goal)
                 break;
         }
-        cout << "findPath north" << endl;
+        // cout << "findPath north" << endl;
         square = depopSquare->northSquare;
         if (square && !history[square->i][square->j])
         {
@@ -177,18 +175,16 @@ void findPath(int x, int y)
         }
     }
 
-    cout << "set path" << endl;
+    // cout << "set path" << endl;
     path = q + 143;
     *path = nullptr;
     if (qstart != qend)
     {
-        --path;
-        *path = square;
         while (square != start)
         {
-            square = history[square->i][square->j];
             --path;
             *path = square;
+            square = history[square->i][square->j];
         }
     }
 }
@@ -206,39 +202,43 @@ void followPath()
 
 void reset()
 {
-    cout << "reset" << endl;
+    // cout << "reset" << endl;
     initiated = false;
 }
 
-void init()
+void initialize()
 {
-    cout << "init START" << endl;
+    // cout << "initialize START" << endl;
     for (int x = 0; x < 12; x++)
+    {
         for (int y = 0; y < 12; y++)
+        {
             maze[x][y] = gladiator->maze->getSquare(x, y);
+        }
+    }
     findPath(11, 11);
 
-    const MazeSquare **read = path;
-    for (read = q; *read != nullptr; read++)
-    {
-        Serial.print((*read)->i);
-        Serial.print(" ");
-        Serial.println((*read)->j);
-    }
+    // const MazeSquare **read = path;
+    // for (read = q; *read != nullptr; read++)
+    // {
+    //     Serial.print((*read)->i);
+    //     Serial.print(" ");
+    //     Serial.println((*read)->j);
+    // }
 
     initiated = true;
-    cout << "init END" << endl;
+    // cout << "initialize END" << endl;
 }
 
 void setup()
 {
-    cout << "setup START" << endl;
+    // cout << "setup START" << endl;
     // instanciation de l'objet gladiator
     gladiator = new Gladiator();
     // enregistrement de la fonction de reset qui s'éxecute à chaque fois avant qu'une partie commence
     gladiator->game->onReset(&reset);
     // gladiator->game->enableFreeMode(RemoteMode::ON);
-    cout << "setup END" << endl;
+    // cout << "setup END" << endl;
 }
 
 void loop()
@@ -247,7 +247,7 @@ void loop()
     if (gladiator->game->isStarted())
     {
         if (!initiated)
-            init();
+            initialize();
         followPath();
     }
     // cout << "loop END" << endl;
