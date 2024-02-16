@@ -67,11 +67,6 @@ void clearHistory()
             history[y][x] = NULL;
 }
 
-void reset()
-{
-    init();
-}
-
 inline float moduloPi(float a) // return angle in [-pi; pi]
 {
     return (a < 0.0) ? (std::fmod(a - M_PI, 2 * M_PI) + M_PI) : (std::fmod(a + M_PI, 2 * M_PI) - M_PI);
@@ -123,14 +118,6 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs)
     }
 
     return targetReached;
-}
-
-void setup()
-{
-    // instanciation de l'objet gladiator
-    gladiator = new Gladiator();
-    // enregistrement de la fonction de reset qui s'éxecute à chaque fois avant qu'une partie commence
-    gladiator->game->onReset(&reset);
 }
 
 list<MazeSquare *> findPath(int x, int y)
@@ -200,23 +187,36 @@ void followPath(list<MazeSquare *> path)
 {
     if (&maze[(int)gladiator->robot->getData().position.x][(int)gladiator->robot->getData().position.y] == path.front())
         path.pop_front();
-    Vector2 pathToAim{path.front()->i, path.front()->j};
+        if (path.size() == 0)
+            return;
+    float x = ((float)path.front()->i + 0.5) / 4.0;
+    float y = ((float)path.front()->j + 0.5) / 4.0;
+    Vector2 pathToAim{x, y};
     aim(gladiator, pathToAim, false);
+}
+
+list<MazeSquare *> path;
+void reset()
+{
+    init();
+    path = findPath(11, 11);
+}
+
+void setup()
+{
+    // instanciation de l'objet gladiator
+    gladiator = new Gladiator();
+    // enregistrement de la fonction de reset qui s'éxecute à chaque fois avant qu'une partie commence
+    gladiator->game->onReset(&reset);
+    // gladiator->game->enableFreeMode(RemoteMode::ON);
 }
 
 void loop()
 {
-    gladiator->log("second");
     if (gladiator->game->isStarted())
     {
-        static unsigned i = 0;
-        bool showLogs = (i % 50 == 0);
-
-        if (aim(gladiator, {2.8, 1.7}, showLogs))
-        {
-            gladiator->log("target atteinte !");
-        }
-        i++;
+        gladiator->log("Loop start");
+        followPath(path);
     }
     delay(10); // boucle à 100Hz
 }
