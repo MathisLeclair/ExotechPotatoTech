@@ -180,7 +180,8 @@ void findPath(int x, int y)
     if (qstart != qend)
     {
         qstart = q;
-        *qstart = goal;
+        *qstart = square;
+        ++qstart;
         while (square != start)
         {
             square = history[square->i][square->j];
@@ -214,10 +215,15 @@ void init()
     cout << "init START" << endl;
     for (int x = 0; x < 12; x++)
         for (int y = 0; y < 12; y++)
-            maze[y][x] = gladiator->maze->getSquare(y, x);
+            maze[x][y] = gladiator->maze->getSquare(x, y);
     findPath(11, 11);
     for (path = q; *path != nullptr; path++)
-        cout << "path: " << (*path)->i << " " << (*path)->j << endl;
+    {
+        Serial.print((*path)->i);
+        Serial.print(" ");
+        Serial.println((*path)->j);
+        // cout << "path: " << (*path)->i << " " << (*path)->j << endl;
+    }
     path = q;
     initiated = true;
     cout << "init END" << endl;
