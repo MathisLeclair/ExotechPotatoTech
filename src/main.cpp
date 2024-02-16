@@ -53,12 +53,7 @@ Gladiator *gladiator;
 
 MazeSquare maze[12][12];
 MazeSquare *history[12][12];
-void init()
-{
-    for (int x = 0; x < 12; x++)
-        for (int y = 0; y < 12; y++)
-            maze[y][x] = gladiator->maze->getSquare(y, x)[0];
-}
+bool initiated = false;
 
 void clearHistory()
 {
@@ -132,6 +127,8 @@ list<MazeSquare *> findPath(int x, int y)
 
     list<MazeSquare *> q;
     q.push_back(start);
+    cout << goal->i << endl;
+    cout << goal->j << endl;
     while (q.size() != 0 && stop)
     {
         depopSquare = q.front();
@@ -140,39 +137,39 @@ list<MazeSquare *> findPath(int x, int y)
         if (square && !history[square->i][square->j])
         {
             q.push_back(square);
+            history[square->i][square->j] = depopSquare;
             if (square == goal)
                 break;
-            history[square->i][square->j] = depopSquare;
         }
         square = depopSquare->westSquare;
         if (square && !history[square->i][square->j])
         {
             q.push_back(square);
+            history[square->i][square->j] = depopSquare;
             if (square == goal)
                 break;
-            history[square->i][square->j] = depopSquare;
         }
         square = depopSquare->southSquare;
         if (square && !history[square->i][square->j])
         {
             q.push_back(square);
+            history[square->i][square->j] = depopSquare;
             if (square == goal)
                 break;
-            history[square->i][square->j] = depopSquare;
         }
         square = depopSquare->northSquare;
         if (square && !history[square->i][square->j])
         {
             q.push_back(square);
+            history[square->i][square->j] = depopSquare;
             if (square == goal)
                 break;
-            history[square->i][square->j] = depopSquare;
         }
     }
     list<MazeSquare *> result;
     if (q.size() != 0)
     {
-        square = goal;
+        cout << "test2" << endl;
         result.push_back(goal);
         while (square != start)
         {
@@ -180,19 +177,18 @@ list<MazeSquare *> findPath(int x, int y)
             result.push_front(square);
         }
     }
+    cout << "test2" << endl;
     return result;
 }
 
 void followPath(list<MazeSquare *> path)
 {
-    if (&maze[(int)gladiator->robot->getData().position.x][(int)gladiator->robot->getData().position.y] == path.front())
-    {
+    if (&(maze[(int)(gladiator->robot->getData().position.x)][(int)(gladiator->robot->getData().position.y)]) == path.front())
         path.pop_front();
-        if (path.size() == 0)
-            return;
-    }
-    float x = ((float)path.front()->i + 0.5) / 4.0;
-    float y = ((float)path.front()->j + 0.5) / 4.0;
+    if (path.size() == 0)
+        return;
+    float x = ((float)(path.front()->i) + 0.5) / 4.0;
+    float y = ((float)(path.front()->j) + 0.5) / 4.0;
     Vector2 pathToAim{x, y};
     aim(gladiator, pathToAim, false);
 }
@@ -200,8 +196,17 @@ void followPath(list<MazeSquare *> path)
 list<MazeSquare *> path;
 void reset()
 {
-    init();
+    gladiator->log("init");
+    initiated = false;
+}
+
+void init()
+{
+    for (int x = 0; x < 12; x++)
+        for (int y = 0; y < 12; y++)
+            maze[y][x] = gladiator->maze->getSquare(y, x)[0];
     path = findPath(11, 11);
+    initiated = true;
 }
 
 void setup()
@@ -217,7 +222,8 @@ void loop()
 {
     if (gladiator->game->isStarted())
     {
-        gladiator->log("Loop start");
+        if (!initiated)
+            init();
         followPath(path);
     }
     delay(10); // boucle à 100Hz
