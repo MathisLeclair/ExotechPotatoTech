@@ -1,7 +1,5 @@
 #include "gladiator.h"
 #include <cmath>
-#include <list>
-#undef abs
 
 // x,y représentent des coordonnées en m
 // Vector{1.5,1.5} représente le point central
@@ -15,7 +13,7 @@ public:
     Vector2() : _x(0.), _y(0.) {}
     Vector2(float x, float y) : _x(x), _y(y) {}
 
-    float norm1() const { return std::abs(_x) + std::abs(_y); }
+    float norm1() const { return abs(_x) + abs(_y); }
     float norm2() const { return std::sqrt(_x * _x + _y * _y); }
     void normalize()
     {
@@ -33,7 +31,7 @@ public:
     Vector2 operator+(const Vector2 &other) const { return {_x + other._x, _y + other._y}; }
     Vector2 operator*(float f) const { return {_x * f, _y * f}; }
 
-    bool operator==(const Vector2 &other) const { return std::abs(_x - other._x) < 1e-5 && std::abs(_y - other._y) < 1e-5; }
+    bool operator==(const Vector2 &other) const { return abs(_x - other._x) < 1e-5 && abs(_y - other._y) < 1e-5; }
     bool operator!=(const Vector2 &other) const { return !(*this == other); }
 
     float x() const { return _x; }
@@ -88,7 +86,7 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs)
     {
         targetReached = true;
     }
-    else if (std::abs(angleError) > ANGLE_REACHED_THRESHOLD)
+    else if (abs(angleError) > ANGLE_REACHED_THRESHOLD)
     {
         rightCommand = angleError / M_PI;
         leftCommand = -angleError / M_PI;
@@ -105,7 +103,7 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs)
 
     if (showLogs || targetReached)
     {
-        gladiator->log("ta %f, ca %f, ea %f, tx %f cx %f ex %f ty %f cy %f ey %f", targetAngle, posRaw.a, angleError, target.x(), pos.x(), posError.x(), target.y(), pos.y(), posError.y());
+        // gladiator->log("ta %f, ca %f, ea %f, tx %f cx %f ex %f ty %f cy %f ey %f", targetAngle, posRaw.a, angleError, target.x(), pos.x(), posError.x(), target.y(), pos.y(), posError.y());
     }
 
     return targetReached;
@@ -170,13 +168,11 @@ void findPath(int x, int y)
     *path = nullptr;
     if (qstart != qend)
     {
-        --path;
-        *path = square;
         while (square != start)
         {
-            square = history[square->i][square->j];
             --path;
             *path = square;
+            square = history[square->i][square->j];
         }
     }
 }
@@ -197,11 +193,15 @@ void reset()
     initiated = false;
 }
 
-void init()
+void initialize()
 {
     for (int x = 0; x < 12; x++)
+    {
         for (int y = 0; y < 12; y++)
+        {
             maze[x][y] = gladiator->maze->getSquare(x, y);
+        }
+    }
     findPath(11, 11);
 
     initiated = true;
@@ -222,7 +222,7 @@ void loop()
     if (gladiator->game->isStarted())
     {
         if (!initiated)
-            init();
+            initialize();
         followPath();
     }
     // cout << "loop END" << endl;
