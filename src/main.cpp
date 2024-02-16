@@ -118,6 +118,7 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs)
 const MazeSquare *q[144];
 void findPath(int x, int y)
 {
+    cout << "findPath START" << endl;
     clearHistory();
     auto currentPos = gladiator->robot->getData().position;
     const MazeSquare *start = maze[(int)currentPos.x][(int)currentPos.y];
@@ -199,36 +200,42 @@ void followPath()
 
 void reset()
 {
-    gladiator->log("init");
+    cout << "reset" << endl;
     initiated = false;
 }
 
 void init()
 {
+    cout << "init START" << endl;
     for (int x = 0; x < 12; x++)
         for (int y = 0; y < 12; y++)
             maze[y][x] = gladiator->maze->getSquare(y, x);
     findPath(11, 11);
     path = q;
     initiated = true;
+    cout << "init END" << endl;
 }
 
 void setup()
 {
+    cout << "setup START" << endl;
     // instanciation de l'objet gladiator
     gladiator = new Gladiator();
     // enregistrement de la fonction de reset qui s'éxecute à chaque fois avant qu'une partie commence
     gladiator->game->onReset(&reset);
     // gladiator->game->enableFreeMode(RemoteMode::ON);
+    cout << "setup END" << endl;
 }
 
 void loop()
 {
+    // cout << "loop START" << endl;
     if (gladiator->game->isStarted())
     {
         if (!initiated)
             init();
         followPath();
     }
-    delay(10); // boucle à 100Hz
+    // cout << "loop END" << endl;
+    delay(100); // boucle à 100Hz
 }
