@@ -7,5 +7,4 @@ libs/*
 platformio.ini
 README.rst
 docs/*
-examples/*
 images/*
