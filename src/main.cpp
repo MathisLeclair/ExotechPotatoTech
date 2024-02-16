@@ -186,9 +186,11 @@ list<MazeSquare *> findPath(int x, int y)
 void followPath(list<MazeSquare *> path)
 {
     if (&maze[(int)gladiator->robot->getData().position.x][(int)gladiator->robot->getData().position.y] == path.front())
+    {
         path.pop_front();
         if (path.size() == 0)
             return;
+    }
     float x = ((float)path.front()->i + 0.5) / 4.0;
     float y = ((float)path.front()->j + 0.5) / 4.0;
     Vector2 pathToAim{x, y};
