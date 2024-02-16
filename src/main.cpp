@@ -179,7 +179,7 @@ void findPath(int x, int y)
 
 void followPath()
 {
-    if (path == nullptr)
+    if (*path == nullptr)
         return;
     float x = ((float)((*path)->i) + 0.5) / 4.0;
     float y = ((float)((*path)->j) + 0.5) / 4.0;
@@ -202,6 +202,10 @@ void initialize()
             maze[x][y] = gladiator->maze->getSquare(x, y);
         }
     }
+    Serial.print("Maze size: ");
+    Serial.println(gladiator->maze->getSize());
+    Serial.print("Maze space size: ");
+    Serial.println(gladiator->maze->getSquareSize());
     findPath(11, 11);
 
     initiated = true;
