@@ -1,1 +1,1 @@
-We have arrived
+We have arrived.
