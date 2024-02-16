@@ -115,27 +115,29 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs)
     return targetReached;
 }
 
-list<const MazeSquare *> findPath(int x, int y)
+const MazeSquare *q[144];
+void findPath(int x, int y)
 {
     clearHistory();
-    bool stop = false;
     auto currentPos = gladiator->robot->getData().position;
     const MazeSquare *start = maze[(int)currentPos.x][(int)currentPos.y];
     const MazeSquare *square;
     const MazeSquare *depopSquare;
     const MazeSquare *goal = maze[x][y];
 
-    list<const MazeSquare *> q;
-    q.push_back(start);
-    cout << "HEY" << endl;
-    while (q.size() != 0 && stop)
+    const MazeSquare **qstart = q;
+    const MazeSquare **qend = q + 1;
+    q[0] = start;
+    while (qstart != qend)
     {
-        depopSquare = q.front();
-        q.pop_front();
+        depopSquare = *qstart;
+        qstart++;
         square = depopSquare->eastSquare;
+        Serial.println(square->i, square->j);
         if (square && !history[square->i][square->j])
         {
-            q.push_back(square);
+            qend = &square;
+            qend++;
             history[square->i][square->j] = depopSquare;
             if (square == goal)
                 break;
@@ -143,7 +145,8 @@ list<const MazeSquare *> findPath(int x, int y)
         square = depopSquare->westSquare;
         if (square && !history[square->i][square->j])
         {
-            q.push_back(square);
+            qend = &square;
+            qend++;
             history[square->i][square->j] = depopSquare;
             if (square == goal)
                 break;
@@ -151,7 +154,8 @@ list<const MazeSquare *> findPath(int x, int y)
         square = depopSquare->southSquare;
         if (square && !history[square->i][square->j])
         {
-            q.push_back(square);
+            qend = &square;
+            qend++;
             history[square->i][square->j] = depopSquare;
             if (square == goal)
                 break;
@@ -159,40 +163,40 @@ list<const MazeSquare *> findPath(int x, int y)
         square = depopSquare->northSquare;
         if (square && !history[square->i][square->j])
         {
-            q.push_back(square);
+            qend = &square;
+            qend++;
             history[square->i][square->j] = depopSquare;
             if (square == goal)
                 break;
         }
     }
-    list<const MazeSquare *> result;
-    if (q.size() != 0)
+
+    if (qstart != qend)
     {
-        cout << goal->i << goal->j << endl;
-        result.push_back(goal);
+        qstart = q;
+        *qstart = goal;
         while (square != start)
         {
             square = history[square->i][square->j];
-            cout << square->i << square->j << endl;
-            result.push_front(square);
+            *qstart = square;
+            ++qstart;
         }
+        *qstart = nullptr;
     }
-    return result;
 }
 
-void followPath(list<const MazeSquare *> path)
+const MazeSquare **path;
+void followPath()
 {
-    if (maze[(int)(gladiator->robot->getData().position.x)][(int)(gladiator->robot->getData().position.y)] == path.front())
-        path.pop_front();
-    if (path.size() == 0)
+    if (path == nullptr)
         return;
-    float x = ((float)(path.front()->i) + 0.5) / 4.0;
-    float y = ((float)(path.front()->j) + 0.5) / 4.0;
+    float x = ((float)((*path)->i) + 0.5) / 4.0;
+    float y = ((float)((*path)->j) + 0.5) / 4.0;
     Vector2 pathToAim{x, y};
-    aim(gladiator, pathToAim, false);
+    if (aim(gladiator, pathToAim, false))
+        path++;
 }
 
-list<const MazeSquare *> path;
 void reset()
 {
     gladiator->log("init");
@@ -204,7 +208,8 @@ void init()
     for (int x = 0; x < 12; x++)
         for (int y = 0; y < 12; y++)
             maze[y][x] = gladiator->maze->getSquare(y, x);
-    path = findPath(11, 11);
+    findPath(11, 11);
+    path = q;
     initiated = true;
 }
 
@@ -223,7 +228,7 @@ void loop()
     {
         if (!initiated)
             init();
-        followPath(path);
+        followPath();
     }
     delay(10); // boucle à 100Hz
 }
