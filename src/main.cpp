@@ -116,6 +116,7 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs)
 }
 
 const MazeSquare *q[144];
+const MazeSquare **path;
 void findPath(int x, int y)
 {
     cout << "findPath START" << endl;
@@ -176,23 +177,22 @@ void findPath(int x, int y)
         }
     }
 
-    cout << "set q to result" << endl;
+    cout << "set path" << endl;
+    path = q + 143;
+    *path = nullptr;
     if (qstart != qend)
     {
-        qstart = q;
-        *qstart = square;
-        ++qstart;
+        --path;
+        *path = square;
         while (square != start)
         {
             square = history[square->i][square->j];
-            *qstart = square;
-            ++qstart;
+            --path;
+            *path = square;
         }
-        *qstart = nullptr;
     }
 }
 
-const MazeSquare **path;
 void followPath()
 {
     if (path == nullptr)
@@ -217,14 +217,15 @@ void init()
         for (int y = 0; y < 12; y++)
             maze[x][y] = gladiator->maze->getSquare(x, y);
     findPath(11, 11);
-    for (path = q; *path != nullptr; path++)
+
+    const MazeSquare **read = path;
+    for (read = q; *read != nullptr; read++)
     {
-        Serial.print((*path)->i);
+        Serial.print((*read)->i);
         Serial.print(" ");
-        Serial.println((*path)->j);
-        // cout << "path: " << (*path)->i << " " << (*path)->j << endl;
+        Serial.println((*read)->j);
     }
-    path = q;
+
     initiated = true;
     cout << "init END" << endl;
 }
