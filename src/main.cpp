@@ -251,6 +251,8 @@ void setBestDestination()
         coin++;
     }
     // If no coin, random
+    if (coin == nullptr)
+        setRandomDestination();
 }
 
 bool changeDest = false;
