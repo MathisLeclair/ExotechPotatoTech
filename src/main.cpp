@@ -232,10 +232,7 @@ void setRandomDestination()
         destX = rand() % 12;
         destY = rand() % 12;
     }
-    gladiator->log("New destination: ");
-    gladiator->log("%d", destX);
-    gladiator->log(" ");
-    gladiator->log("%d", destY);
+    gladiator->log("New destination: x:%d y:%d", destX, destY);
 }
 
 void setBestDestination()
@@ -246,18 +243,13 @@ void setBestDestination()
     {
         if (coin->value == 1)
         {
-            gladiator->log("Going to coin: ");
-            gladiator->log("%f", coin->p.x);
-            gladiator->log(" ");
-            gladiator->log("%f", coin->p.y);
+            gladiator->log("Going to coin: x:%f y:%f", coin->p.x, coin->p.y);
             destX = (int)(coin->p.x * 4);
             destY = (int)(coin->p.y * 4);
-            gladiator->log("Going to space: ");
-            gladiator->log("%d", destX);
-            gladiator->log(" ");
-            gladiator->log("%d", destY);
+            gladiator->log("Going to space: x:%d y:", destX, destY);
             break;
         }
+        coin++;
     }
     // If no coin, random
 }
@@ -331,7 +323,7 @@ void loop()
             if (changeDest)
             {
                 gladiator->log("Changing destination");
-                setBestDestination();
+                setRandomDestination();
                 findPath(destX, destY);
                 changeDest = false;
             }
