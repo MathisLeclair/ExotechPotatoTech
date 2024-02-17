@@ -296,7 +296,7 @@ bool setCoinPath()
             findPath(destX, destY);
             if (isDangerous(destX, destY) || pathIsDangerous() || *path == nullptr)
             {
-                (*c)++;
+                c++;
                 continue;
             }
             gladiator->log("Going to coin: x:%f y:%f", (*c)->p.x, (*c)->p.y);
