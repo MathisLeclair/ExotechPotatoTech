@@ -1,6 +1,6 @@
 #include "gladiator.h"
 #include <cmath>
-
+#include <chrono>
 // x,y représentent des coordonnées en m
 // Vector{1.5,1.5} représente le point central
 // Pour convertir une cordonnée de cellule (i,j) (0<=i<=13, 0<=j<=13) :
@@ -54,6 +54,7 @@ const MazeSquare *maze[12][12];
 const Coin *coins[42];
 
 bool initiated = false;
+long timestamp;
 
 void fillMap()
 {
@@ -212,18 +213,31 @@ bool followPath()
     return false;
 }
 
-bool isDangerous(int i, int j)
+uint64_t timeSinceEpochMillisec()
 {
-    float size = gladiator->maze->getSize();
-    if (i > size || j > size || i < (3 - size) || j < (3 - size))
+    using namespace std::chrono;
+    return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
+}
+
+bool squareIsOutsideOfMap(int i, int j)
+{
+    long actualTime = timeSinceEpochMillisec();
+    int reduc = (actualTime - timestamp) / 20000;
+
+    if (i > 12 - reduc || j > 12 - reduc || i < reduc || j < reduc)
         return true;
     return false;
+}
+
+bool isDangerous(int i, int j)
+{
+    return squareIsOutsideOfMap(i, j);
 }
 
 int destX, destY = -1;
 void setRandomDestination()
 {
-    gladiator->log("Searching for destionation...");
+    gladiator->log("Searching for destination...");
     destX = rand() % 12;
     destY = rand() % 12;
     while (destX == -1 || destY == -1 || isDangerous(destX, destY))
@@ -265,7 +279,7 @@ void checkDanger()
         handleDanger = true;
         return;
     }
-    if (isDangerous(gladiator->robot->getData().position.x, gladiator->robot->getData().position.y))
+    if (isDangerous(robSquare->i, robSquare->j))
     {
         gladiator->log("Robot is in danger");
         handleDanger = true;
@@ -274,11 +288,10 @@ void checkDanger()
         handleDanger = false;
 }
 
-int loopTick = 0;
 void reset()
 {
+    timestamp = timeSinceEpochMillisec();
     initiated = false;
-    loopTick = 0;
     path = q + 143;
     *path = nullptr;
 }
@@ -309,7 +322,6 @@ enum Strat
 
 void loop()
 {
-    loopTick++;
     if (gladiator->game->isStarted())
     {
         if (!initiated)
@@ -317,7 +329,7 @@ void loop()
 
         // Check if bot is in danger
         // This can toggle handleDanger or changeDest
-        if (loopTick % 50 == 0)
+        if ((timestamp - timeSinceEpochMillisec()) % 10 == 0)
             checkDanger();
 
         if (handleDanger)
@@ -339,5 +351,5 @@ void loop()
             changeDest = followPath();
         }
     }
-    // delay(10); // boucle à 100Hz
+    // delay(1); // boucle à 100Hz
 }
