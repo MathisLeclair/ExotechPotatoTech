@@ -298,8 +298,10 @@ void gotoPoints(bool getCoin)
             qend++;
             history[square->i][square->j] = depopSquare;
             if (getCoin)
+            {
                 if (square->coin.value == 1)
                     break;
+            }
             else if (square->possession != initRobotData.teamId)
                 break;
         }
@@ -310,8 +312,10 @@ void gotoPoints(bool getCoin)
             qend++;
             history[square->i][square->j] = depopSquare;
             if (getCoin)
+            {
                 if (square->coin.value == 1)
                     break;
+            }
             else if (square->possession != initRobotData.teamId)
                 break;
         }
@@ -322,8 +326,10 @@ void gotoPoints(bool getCoin)
             qend++;
             history[square->i][square->j] = depopSquare;
             if (getCoin)
+            {
                 if (square->coin.value == 1)
                     break;
+            }
             else if (square->possession != initRobotData.teamId)
                 break;
         }
@@ -334,8 +340,10 @@ void gotoPoints(bool getCoin)
             qend++;
             history[square->i][square->j] = depopSquare;
             if (getCoin)
+            {
                 if (square->coin.value == 1)
                     break;
+            }
             else if (square->possession != initRobotData.teamId)
                 break;
         }
