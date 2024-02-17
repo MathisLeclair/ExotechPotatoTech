@@ -214,11 +214,10 @@ bool followPath()
 
 bool isDangerous(int i, int j)
 {
-    return (
-        (maze[i][j]->eastSquare == nullptr &&
-         maze[i][j]->westSquare == nullptr &&
-         maze[i][j]->northSquare == nullptr &&
-         maze[i][j]->southSquare == nullptr));
+    float size = gladiator->maze->getSize();
+    if (i > size * 4 || j > size * 4 || i < (12 - size * 4) || j < (12 - size * 4))
+        return true;
+    return false;
 }
 
 int destX, destY = -1;
@@ -259,11 +258,6 @@ bool handleDanger = false;
 Vector2 safePos{1.5, 1.5};
 void checkDanger()
 {
-    if (isDangerous(destX, destY))
-    {
-        gladiator->log("Destination is dangerous, updating");
-        changeDest = true;
-    }
     const MazeSquare *robSquare = gladiator->maze->getNearestSquare();
     if (isDangerous(robSquare->i, robSquare->j))
     {
@@ -298,6 +292,13 @@ void setup()
     // gladiator->game->enableFreeMode(RemoteMode::ON);
 }
 
+enum Strat
+{
+    OOB,
+    DEST,
+    ATTACK
+};
+
 int loopTick = 0;
 void loop()
 {
@@ -309,7 +310,7 @@ void loop()
 
         // Check if bot is in danger
         // This can toggle handleDanger or changeDest
-        if (loopTick % 5 == 0)
+        if (loopTick % 15 == 0)
             checkDanger();
 
         if (handleDanger)
