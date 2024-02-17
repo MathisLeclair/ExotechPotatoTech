@@ -129,7 +129,7 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     {
         float K1 = .7;
         float K2 = 1.5;
-        // float K1 = .2;
+        // float K1 = .15;
         // float K2 = .5;
 
         // rotate
@@ -313,13 +313,53 @@ void checkDanger()
         gladiator->log("Robot is in danger");
         handleDanger = true;
         changeDest = true;
+        return;
     }
-    else
-        handleDanger = false;
+
+    handleDanger = false;
+
+    const MazeSquare **p = path;
+    while (*p != nullptr)
+    {
+        if (isDangerous((*p)->i, (*p)->j))
+        {
+            gladiator->log("Path is in danger");
+            changeDest = true;
+            break;
+        }
+        p++;
+    }
 }
 
+// RobotData allyData = RobotData{} 
+// void getNearestEnemy()
+// {
+//     RobotData data = gladiator->robot->getData();
+//     RobotList l = gladiator->game->getPlayingRobotsId();
+//     for (int i = 0; i < 4; i++)
+//     {
+//         if (l.ids[i] == 0)
+//             continue;
+//         RobotData enemy = gladiator->game->getOtherRobotData(l.ids[i]);
+//         // Skip dead enemies and teammates
+//         if (enemy.lifes == 0 || enemy.teamId == data.teamId)
+//             continue;
+//         if (!enemyExists)
+//         {
+//             enemyExists = true;
+//             enemyData = enemy;
+//         }
+//         else
+//         {
+
+//         }
+//     }
+// }
+
+uint64_t tick = 0;
 void reset()
 {
+    tick = 0;
     timestamp = timeSinceEpochMillisec();
     initiated = false;
     path = q + 143;
@@ -356,10 +396,11 @@ void loop()
     {
         if (!initiated)
             initialize();
+        tick++;
 
         // Check if bot is in danger
         // This can toggle handleDanger or changeDest
-        if ((timestamp - timeSinceEpochMillisec()) % 10 == 0)
+        if (tick % 50 == 0)
             checkDanger();
 
         if (handleDanger)
@@ -381,6 +422,8 @@ void loop()
             }
             // New destination if destination reached
             changeDest = followPath();
+            // gladiator->control->setWheelSpeed(WheelAxis::LEFT, 0.0);
+            // gladiator->control->setWheelSpeed(WheelAxis::RIGHT, 0.0);
         }
     }
     // delay(1); // boucle à 100Hz
