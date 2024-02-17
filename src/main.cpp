@@ -328,7 +328,10 @@ bool checkSquare(const MazeSquare **&qend, const MazeSquare *square, const MazeS
 {
     history[square->i][square->j] = depopSquare;
     if (isDangerous(square->i, square->j))
+    {
+        gladiator->log("square is dangeros fuck off %d %d", square->i, square->j);
         return false;
+    }
     *qend = square;
     qend++;
     if (getCoin)
@@ -449,10 +452,7 @@ void getEnemies()
         RobotData enemy = gladiator->game->getOtherRobotData(l.ids[i]);
         // Skip dead enemies and teammates
         if (enemy.lifes == 0)
-        {
             deads[i] = Vector2((int)(enemy.position.x * 4), (int)(enemy.position.y * 4));
-            gladiator->log("new deads[%d][x]=%f deads[%d][y]=%f, raw: %f %f", i, deads[i].x(), i, deads[i].y(), enemy.position.x, enemy.position.y);
-        }
         else if (enemy.teamId == data.teamId)
             continue;
         else
