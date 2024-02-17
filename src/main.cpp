@@ -218,8 +218,7 @@ bool isDangerous(int i, int j)
         (maze[i][j]->eastSquare == nullptr &&
          maze[i][j]->westSquare == nullptr &&
          maze[i][j]->northSquare == nullptr &&
-         maze[i][j]->southSquare == nullptr)
-    );
+         maze[i][j]->southSquare == nullptr));
 }
 
 int destX, destY = -1;
@@ -247,16 +246,16 @@ void setBestDestination()
     {
         if (coin->value == 1)
         {
-            Serial.print("Going to coin: ");
-            Serial.print(coin->p.x, 2);
-            Serial.print(" ");
-            Serial.println(coin->p.y, 2);
+            gladiator->log("Going to coin: ");
+            gladiator->log("%f", coin->p.x);
+            gladiator->log(" ");
+            gladiator->log("%f", coin->p.y);
             destX = (int)(coin->p.x * 4);
             destY = (int)(coin->p.y * 4);
-            Serial.print("Going to space: ");
-            Serial.print(destX);
-            Serial.print(" ");
-            Serial.println(destY);
+            gladiator->log("Going to space: ");
+            gladiator->log("%d", destX);
+            gladiator->log(" ");
+            gladiator->log("%d", destY);
             break;
         }
     }
@@ -270,13 +269,13 @@ void checkDanger()
 {
     if (isDangerous(destX, destY))
     {
-        Serial.println("Destination is dangerous, updating");
+        gladiator->log("Destination is dangerous, updating");
         changeDest = true;
     }
     const MazeSquare *robSquare = gladiator->maze->getNearestSquare();
     if (isDangerous(robSquare->i, robSquare->j))
     {
-        Serial.println("Robot is in danger");
+        gladiator->log("Robot is in danger");
         handleDanger = true;
     }
     else
@@ -315,12 +314,12 @@ void loop()
     {
         if (!initiated)
             initialize();
-        
+
         // Check if bot is in danger
         // This can toggle handleDanger or changeDest
         if (loopTick % 5 == 0)
             checkDanger();
-        
+
         if (handleDanger)
         {
             aim(gladiator, safePos, false);
@@ -331,7 +330,7 @@ void loop()
             // This can be set by followPath or handleDanger
             if (changeDest)
             {
-                Serial.println("Changing destination");
+                gladiator->log("Changing destination");
                 setBestDestination();
                 findPath(destX, destY);
                 changeDest = false;
