@@ -54,7 +54,8 @@ enum Strat
     OOB,
     GOTO,
     ESCAPE,
-    ATTACK
+    ATTACK,
+    SHOOT
 };
 
 Strat strat = Strat::NONE;
@@ -115,15 +116,11 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     bool direction = true;
     if (angleError > M_PI_2)
     {
-        if (tick % 500)
-            gladiator->log("backwards RIGHT");
         direction = false;
         angleError -= M_PI;
     }
     else if (angleError < -M_PI_2)
     {
-        if (tick % 500)
-            gladiator->log("backwards LEFT");
         direction = false;
         angleError += M_PI;
     }
@@ -140,15 +137,11 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     {
         if (abs(angleError) < 0.3)
         {
-            if (tick % 500)
-                gladiator->log("FAR fullspeed");
             rightCommand += .8;
             leftCommand += .8;
         }
         else if (abs(angleError) > M_PI - 0.3)
         {
-            if (tick % 500)
-                gladiator->log("FAR fullspeed BACK");
             rightCommand -= .8;
             leftCommand -= .8;
         }
@@ -156,16 +149,9 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
         {
             if (tick % 500)
                 gladiator->log("FAR adjust");
-            // float K = .7;
             float K = .2;
             rightCommand = angleError * K;
             leftCommand = -angleError * K;
-        }
-        if (tick % 500)
-        {
-            gladiator->log("angle: %f", angleError);
-            gladiator->log("rightCommand: %f", rightCommand);
-            gladiator->log("leftCommand: %f", leftCommand);
         }
     }
     else
@@ -269,6 +255,11 @@ void findPath(int x, int y)
             *path = square;
             square = history[square->i][square->j];
         }
+        strat = Strat::GOTO;
+    }
+    else
+    {
+        strat = Strat::OOB;
     }
 }
 
@@ -334,8 +325,12 @@ void gotoPoints()
             *path = square;
             square = history[square->i][square->j];
         }
+        strat = Strat::GOTO;
     }
-    strat = Strat::GOTO;
+    else
+    {
+        strat = Strat::OOB;
+    }
 }
 
 bool followPath()
@@ -360,31 +355,19 @@ bool squareIsOutsideOfMap(int i, int j)
 {
     uint64_t actualTime = timeSinceEpochMillisec();
     int reduc = (actualTime - timestamp) / 20000;
-    gladiator->log("actual: %lld, time: %lld reduc: %d", actualTime, timestamp, reduc);
+    // gladiator->log("actual: %lld, time: %lld reduc: %d", actualTime, timestamp, reduc);
 
-    if (i > 12 - reduc || j > 12 - reduc || i < reduc || j < reduc)
+    if (i > 11 - reduc || j > 11 - reduc || i < reduc || j < reduc)
+    {
+        gladiator->log("squareIsOutsideOfMap %d %d", i, j);
         return true;
+    }
     return false;
 }
 
 bool isDangerous(int i, int j)
 {
     return squareIsOutsideOfMap(i, j);
-}
-
-bool pathIsDangerous()
-{
-    const MazeSquare **p = path;
-    while (*p != nullptr)
-    {
-        if (isDangerous((*p)->i, (*p)->j))
-        {
-            gladiator->log("See this");
-            return true;
-        }
-        p++;
-    }
-    return false;
 }
 
 int destX, destY = -1;
@@ -404,38 +387,9 @@ void setRandomPath()
     gladiator->log("New destination: x:%d y:%d", destX, destY);
 }
 
-bool setCoinPath()
+bool weFucked(const MazeSquare *robSquare)
 {
-    // First try to get coin
-    const Coin **c = coins;
-    while (*c != nullptr)
-    {
-        if ((*c)->value == 1)
-        {
-            destX = (int)((*c)->p.x * 4);
-            destY = (int)((*c)->p.y * 4);
-            findPath(destX, destY);
-            if (isDangerous(destX, destY) || pathIsDangerous() || *path == nullptr)
-            {
-                c++;
-                continue;
-            }
-            gladiator->log("Going to coin: x:%f y:%f", (*c)->p.x, (*c)->p.y);
-            gladiator->log("Going to space: x:%d y:%d", destX, destY);
-            break;
-        }
-        c++;
-    }
-    // If no coin, random
-    if ((*c) == nullptr)
-        return false;
-    return true;
-}
-
-void setBestPath()
-{
-    if (!setCoinPath())
-        setRandomPath();
+    return (!robSquare->eastSquare && !robSquare->westSquare && !robSquare->southSquare && !robSquare->westSquare);
 }
 
 bool changeDest = false;
@@ -445,7 +399,7 @@ void checkOOB()
 {
     const MazeSquare *robSquare = gladiator->maze->getNearestSquare();
     // OOB
-    if (robSquare == nullptr || isDangerous(robSquare->i, robSquare->j) || pathIsDangerous())
+    if (robSquare == nullptr || isDangerous(robSquare->i, robSquare->j) || weFucked(robSquare))
     {
         gladiator->log("Robot OOB");
         strat = Strat::OOB;
@@ -455,29 +409,50 @@ void checkOOB()
         strat = Strat::NONE;
 }
 
-// RobotData allyData = RobotData{}
-// void getNearestEnemy()
-// {
-//     RobotData data = gladiator->robot->getData();
-//     RobotList l = gladiator->game->getPlayingRobotsId();
-//     for (int i = 0; i < 4; i++)
-//     {
-//         if (l.ids[i] == 0)
-//             continue;
-//         RobotData enemy = gladiator->game->getOtherRobotData(l.ids[i]);
-//         // Skip dead enemies and teammates
-//         if (enemy.lifes == 0 || enemy.teamId == data.teamId)
-//             continue;
-//         if (!enemyExists)
-//         {
-//             enemyExists = true;
-//             enemyData = enemy;
-//         }
-//         else
-//         {
-//         }
-//     }
-// }
+Vector2 enemies[2];
+void getEnemies()
+{
+    RobotData data = gladiator->robot->getData();
+    RobotList l = gladiator->game->getPlayingRobotsId();
+    int a = 0;
+    enemies[0] = Vector2{255, 255};
+    enemies[1] = Vector2{255, 255};
+    for (int i = 0; i < 4; i++)
+    {
+        if (l.ids[i] == 0)
+            continue;
+        RobotData enemy = gladiator->game->getOtherRobotData(l.ids[i]);
+        // Skip dead enemies and teammates
+        if (enemy.lifes == 0 || enemy.teamId == data.teamId)
+            continue;
+        else
+        {
+            enemies[a] = Vector2{enemy.position.x, enemy.position.y};
+            ++a;
+        }
+    }
+}
+
+bool canSee(Vector2 v)
+{
+    return v.angle() < M_PI / 8;
+}
+
+void checkEnemies()
+{
+    auto robotPos = gladiator->robot->getData().position;
+    Vector2 posUs{robotPos.x, robotPos.y};
+
+    float dist0 = (enemies[0] - posUs).norm2();
+    float dist1 = (enemies[1] - posUs).norm2();
+
+    if (dist0 < 3 && canSee(enemies[0]))
+        gladiator->weapon->launchRocket();
+    else if (dist1 < 3 && canSee(enemies[1]))
+        gladiator->weapon->launchRocket();
+    // else if (dist0 < 2 || dist1 < 2)
+    //     strat = Strat::ATTACK;
+}
 
 void reset()
 {
@@ -504,6 +479,26 @@ void setup()
     // gladiator->game->enableFreeMode(RemoteMode::ON);
 }
 
+bool veryFastLoop()
+{
+    return !(tick % 10);
+}
+
+bool fastLoop()
+{
+    return !(tick % 50);
+}
+
+bool slowLoop()
+{
+    return !(tick % 200);
+}
+
+bool verySlowLoop()
+{
+    return !(tick % 500);
+}
+
 void loop()
 {
     if (gladiator->game->isStarted())
@@ -512,13 +507,15 @@ void loop()
             initialize();
         tick++;
 
-        if (!(tick % 50))
+        if (strat != Strat::OOB && fastLoop())
             checkOOB();
+        if (slowLoop())
+            getEnemies();
+
         if (strat == Strat::OOB)
         {
-            Position pos = gladiator->robot->getData().position;
-            if (tick % 500 == 0)
-                gladiator->log("Going to center: %f %f", pos.x, pos.y);
+            if (verySlowLoop())
+                checkOOB();
             aim(gladiator, MiddlePos, false, true);
         }
         else if (strat == Strat::ESCAPE)
@@ -532,7 +529,6 @@ void loop()
         else if (strat == Strat::GOTO)
         {
             // checkEscape();
-            // checkEnemies();
 
             if (followPath())
                 gotoPoints();
@@ -541,16 +537,5 @@ void loop()
         {
             gotoPoints();
         }
-
-        // Set new dest if requested
-        // This can be set by followPath or handleDanger
-        // if (changeDest)
-        // {
-        //     gladiator->log("Changing destination");
-        //     setBestPath();
-        //     changeDest = false;
-        // }
-        // // New destination if destination reached
-        // changeDest = followPath();
     }
 }
