@@ -79,7 +79,7 @@ inline float moduloPi(float a) // return angle in [-pi; pi]
 
 inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs)
 {
-    constexpr float POS_REACHED_THRESHOLD = 0.05;
+    constexpr float POS_REACHED_THRESHOLD = 0.08;
 
     auto posRaw = gladiator->robot->getData().position;
 
@@ -100,16 +100,16 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs)
     }
     else
     {
-        float K1 = 1;
-        float K2 = 2;
+        float K1 = .7;
+        float K2 = 1.5;
 
         // rotate
-        rightCommand = angleError * K1;
-        leftCommand = -angleError * K1;
+        rightCommand = angleError * abs(angleError) * K1;
+        leftCommand = -angleError * abs(angleError) * K1;
 
         float factor = posError.norm2() * K2;
-        rightCommand += factor; //+angleError*0.1  => terme optionel, "pseudo correction angulaire";
-        leftCommand += factor;  //-angleError*0.1   => terme optionel, "pseudo correction angulaire";
+        rightCommand += factor + .1; //+angleError*0.1  => terme optionel, "pseudo correction angulaire";
+        leftCommand += factor + .1;  //-angleError*0.1   => terme optionel, "pseudo correction angulaire";
     }
 
     gladiator->control->setWheelSpeed(WheelAxis::LEFT, leftCommand);
