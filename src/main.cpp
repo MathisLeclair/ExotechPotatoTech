@@ -438,40 +438,43 @@ void checkOOB()
         strat = Strat::NONE;
 }
 
-Vector2 enemies[2];
+Vector2 allyPos;
+Vector2 enemyPos[2];
 float enemiesDist[2];
-void getEnemies()
+void getOtherRobotInfos()
 {
     RobotData data = gladiator->robot->getData();
     RobotList l = gladiator->game->getPlayingRobotsId();
     int a = 0;
-    enemies[0] = Vector2{255, 255};
-    enemies[1] = Vector2{255, 255};
+    allyPos = Vector2{255, 255};
+    enemyPos[0] = Vector2{255, 255};
+    enemyPos[1] = Vector2{255, 255};
     for (int i = 0; i < 4; i++)
     {
-        if (l.ids[i] == 0)
+        if (l.ids[i] == 0 || l.ids[i] == initRobotData.id)
             continue;
-        RobotData enemy = gladiator->game->getOtherRobotData(l.ids[i]);
+        RobotData bot = gladiator->game->getOtherRobotData(l.ids[i]);
         // Skip dead enemies and teammates
-        if (enemy.lifes == 0)
+        if (bot.lifes == 0)
         {
-            deads[i] = Vector2((int)(enemy.position.x * 4), (int)(enemy.position.y * 4));
-            // gladiator->log("new deads[%d][x]=%f deads[%d][y]=%f, raw: %f %f", i, deads[i].x(), i, deads[i].y(), enemy.position.x, enemy.position.y);
+            deads[i] = Vector2((int)(bot.position.x * 4), (int)(bot.position.y * 4));
+            // gladiator->log("new deads[%d][x]=%f deads[%d][y]=%f, raw: %f %f", i, deads[i].x(), i, deads[i].y(), bot.position.x, bot.position.y);
         }
-        else if (enemy.teamId == data.teamId)
+        else if (bot.teamId == data.teamId)
             continue;
+        // Handle enemies
         else
         {
-            enemies[a] = Vector2{enemy.position.x, enemy.position.y};
+            enemyPos[a] = Vector2{bot.position.x, bot.position.y};
             ++a;
         }
     }
 
-    auto robotPos = gladiator->robot->getData().position;
+    Position robotPos = gladiator->robot->getData().position;
     Vector2 posUs{robotPos.x, robotPos.y};
 
-    enemiesDist[0] = (enemies[0] - posUs).norm2();
-    enemiesDist[1] = (enemies[1] - posUs).norm2();
+    enemiesDist[0] = (enemyPos[0] - posUs).norm2();
+    enemiesDist[1] = (enemyPos[1] - posUs).norm2();
 }
 
 bool canSee(Vector2 v)
@@ -485,12 +488,12 @@ void checkEnemies()
     Vector2 posUs{robotPos.x, robotPos.y};
 
     if (gladiator->weapon->canLaunchRocket() && enemiesDist[0] < .9 &&
-        abs(moduloPi((enemies[0] - posUs).angle() - robotPos.a)) < M_PI / 32)
+        abs(moduloPi((enemyPos[0] - posUs).angle() - robotPos.a)) < M_PI / 32)
     {
         gladiator->weapon->launchRocket();
     }
     else if (gladiator->weapon->canLaunchRocket() && enemiesDist[1] < .9 &&
-             abs(moduloPi((enemies[1] - posUs).angle() - robotPos.a)) < M_PI / 32)
+             abs(moduloPi((enemyPos[1] - posUs).angle() - robotPos.a)) < M_PI / 32)
     {
         gladiator->weapon->launchRocket();
     }
@@ -561,13 +564,13 @@ void attack(int i)
     auto robotPos = gladiator->robot->getData().position;
     Vector2 posUs{robotPos.x, robotPos.y};
 
-    if (abs(moduloPi((enemies[i] - posUs).angle() - robotPos.a)) > M_PI / 4)
+    if (abs(moduloPi((enemyPos[i] - posUs).angle() - robotPos.a)) > M_PI / 4)
     {
-        gladiator->control->setWheelSpeed(WheelAxis::LEFT, (moduloPi((enemies[i] - posUs).angle() - robotPos.a)) / 3);
-        gladiator->control->setWheelSpeed(WheelAxis::RIGHT, (moduloPi((enemies[i] - posUs).angle() - robotPos.a)) / 3);
+        gladiator->control->setWheelSpeed(WheelAxis::LEFT, (moduloPi((enemyPos[i] - posUs).angle() - robotPos.a)) / 3);
+        gladiator->control->setWheelSpeed(WheelAxis::RIGHT, (moduloPi((enemyPos[i] - posUs).angle() - robotPos.a)) / 3);
     }
     else
-        aim(gladiator, enemies[i], false, true);
+        aim(gladiator, enemyPos[i], false, true);
 }
 
 // todo: esquive de missiles
@@ -588,7 +591,7 @@ void loop()
             checkOOB();
         if (slowLoop())
         {
-            getEnemies();
+            getOtherRobotInfos();
             checkEnemies();
         }
 
