@@ -48,13 +48,24 @@ private:
 
 using namespace std;
 
+enum Strat
+{
+    NONE,
+    OOB,
+    GOTO,
+    ESCAPE,
+    ATTACK
+};
+
+Strat strat = Strat::NONE;
+
 Gladiator *gladiator;
 
 const MazeSquare *maze[12][12];
 const Coin *coins[42];
 
 bool initiated = false;
-long timestamp;
+uint64_t timestamp;
 
 void fillMap()
 {
@@ -221,6 +232,72 @@ void findPath(int x, int y)
     }
 }
 
+void gotoPoints()
+{
+    clearHistory();
+    const MazeSquare *start = gladiator->maze->getNearestSquare();
+    const MazeSquare *square;
+    const MazeSquare *depopSquare;
+
+    const MazeSquare **qstart = q;
+    const MazeSquare **qend = q + 1;
+    *q = start;
+    while (qstart != qend)
+    {
+        depopSquare = *qstart;
+        qstart++;
+        square = depopSquare->eastSquare;
+        if (square && !history[square->i][square->j])
+        {
+            *qend = square;
+            qend++;
+            history[square->i][square->j] = depopSquare;
+            if (square->possession < 1)
+                break;
+        }
+        square = depopSquare->westSquare;
+        if (square && !history[square->i][square->j])
+        {
+            *qend = square;
+            qend++;
+            history[square->i][square->j] = depopSquare;
+            if (square->possession < 1)
+                break;
+        }
+        square = depopSquare->southSquare;
+        if (square && !history[square->i][square->j])
+        {
+            *qend = square;
+            qend++;
+            history[square->i][square->j] = depopSquare;
+            if (square->possession < 1)
+                break;
+        }
+        square = depopSquare->northSquare;
+        if (square && !history[square->i][square->j])
+        {
+            *qend = square;
+            qend++;
+            history[square->i][square->j] = depopSquare;
+            if (square->possession < 1)
+                break;
+        }
+    }
+
+    path = q + 143;
+    *path = nullptr;
+    if (qstart != qend)
+    {
+        while (square != start)
+        {
+            --path;
+            *path = square;
+            square = history[square->i][square->j];
+        }
+    }
+    strat = Strat::GOTO;
+}
+
 bool followPath()
 {
     if (*path == nullptr)
@@ -241,8 +318,9 @@ uint64_t timeSinceEpochMillisec()
 
 bool squareIsOutsideOfMap(int i, int j)
 {
-    long actualTime = timeSinceEpochMillisec();
+    uint64_t actualTime = timeSinceEpochMillisec();
     int reduc = (actualTime - timestamp) / 20000;
+    gladiator->log("actual: %lld, time: %lld reduc: %d", actualTime, timestamp, reduc);
 
     if (i > 12 - reduc || j > 12 - reduc || i < reduc || j < reduc)
         return true;
@@ -322,34 +400,19 @@ void setBestPath()
 
 bool changeDest = false;
 bool handleDanger = false;
-Vector2 safePos{1.5, 1.5};
-void checkDanger()
+Vector2 MiddlePos{1.5, 1.5};
+void checkOOB()
 {
     const MazeSquare *robSquare = gladiator->maze->getNearestSquare();
     // OOB
-    if (robSquare == nullptr)
+    if (robSquare == nullptr || isDangerous(robSquare->i, robSquare->j) || pathIsDangerous())
     {
-        gladiator->log("Robot square outside of map");
-        handleDanger = true;
-        changeDest = true;
+        gladiator->log("Robot OOB");
+        strat = Strat::OOB;
         return;
     }
-    // OOM
-    if (isDangerous(robSquare->i, robSquare->j))
-    {
-        gladiator->log("Robot is in danger");
-        handleDanger = true;
-        changeDest = true;
-        return;
-    }
-
-    handleDanger = false;
-
-    if (pathIsDangerous())
-    {
-        gladiator->log("Path is in danger");
-        changeDest = true;
-    }
+    else if (strat == Strat::OOB)
+        strat = Strat::NONE;
 }
 
 // RobotData allyData = RobotData{}
@@ -381,16 +444,16 @@ uint64_t tick = 0;
 void reset()
 {
     tick = 0;
-    timestamp = timeSinceEpochMillisec();
+    timestamp = timeSinceEpochMillisec() - 1500;
     initiated = false;
     path = q + 143;
     *path = nullptr;
+    strat = Strat::NONE;
 }
 
 void initialize()
 {
     fillMap();
-    setBestPath();
     initiated = true;
 }
 
@@ -403,13 +466,6 @@ void setup()
     // gladiator->game->enableFreeMode(RemoteMode::ON);
 }
 
-enum Strat
-{
-    OOB,
-    DEST,
-    ATTACK
-};
-
 void loop()
 {
     if (gladiator->game->isStarted())
@@ -418,33 +474,45 @@ void loop()
             initialize();
         tick++;
 
-        // Check if bot is in danger
-        // This can toggle handleDanger or changeDest
-        if (tick % 50 == 0)
-            checkDanger();
-
-        if (handleDanger)
+        if (!(tick % 50))
+            checkOOB();
+        if (strat == Strat::OOB)
         {
             Position pos = gladiator->robot->getData().position;
             if (tick % 500 == 0)
                 gladiator->log("Going to center: %f %f", pos.x, pos.y);
-            aim(gladiator, safePos, false, true);
+            aim(gladiator, MiddlePos, false, true);
         }
-        else
+        else if (strat == Strat::ESCAPE)
         {
-            // Set new dest if requested
-            // This can be set by followPath or handleDanger
-            if (changeDest)
-            {
-                gladiator->log("Changing destination");
-                setBestPath();
-                changeDest = false;
-            }
-            // New destination if destination reached
-            changeDest = followPath();
-            // gladiator->control->setWheelSpeed(WheelAxis::LEFT, 0.0);
-            // gladiator->control->setWheelSpeed(WheelAxis::RIGHT, 0.0);
+            aim(gladiator, MiddlePos, false, true);
         }
+        else if (strat == Strat::ATTACK)
+        {
+            // checkEscape();
+        }
+        else if (strat == Strat::GOTO)
+        {
+            // checkEscape();
+            // checkEnemies();
+
+            if (followPath())
+                gotoPoints();
+        }
+        else if (strat == Strat::NONE)
+        {
+            gotoPoints();
+        }
+
+        // Set new dest if requested
+        // This can be set by followPath or handleDanger
+        // if (changeDest)
+        // {
+        //     gladiator->log("Changing destination");
+        //     setBestPath();
+        //     changeDest = false;
+        // }
+        // // New destination if destination reached
+        // changeDest = followPath();
     }
-    // delay(1); // boucle à 100Hz
 }
