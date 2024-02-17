@@ -108,10 +108,27 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     {
         targetReached = true;
     }
+    else if (posError.norm2() > 0.8)
+    {
+        gladiator->log("angle: %f", angleError);
+        if (abs(angleError) < 0.3)
+        {
+            rightCommand += .8;
+            leftCommand += .8;
+        }
+        else
+        {
+            float K = .7;
+            rightCommand = angleError * K;
+            leftCommand = -angleError * K;
+        }
+        gladiator->log("rightCommand: %f", rightCommand);
+        gladiator->log("leftCommand: %f", leftCommand);
+    }
     else
     {
-        float K1 = emergency ? 2 : .7;
-        float K2 = emergency ? 5 : 1.5;
+        float K1 = .7;
+        float K2 = 1.5;
         // float K1 = .2;
         // float K2 = .5;
 
