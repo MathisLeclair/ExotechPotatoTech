@@ -55,6 +55,7 @@ enum Strat
     GOTO,
     ESCAPE,
     ATTACK,
+    SPIN,
     SHOOT
 };
 
@@ -128,25 +129,22 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     bool targetReached = false;
     float leftCommand = 0.f;
     float rightCommand = 0.f;
-    bool override = false;
 
     if (posError.norm2() < POS_REACHED_THRESHOLD) //
     {
         targetReached = true;
     }
-    else if (posError.norm2() > 0.8)
+    else if (posError.norm2() > 1.2)
     {
         if (abs(angleError) < 0.3)
         {
             rightCommand += .8;
             leftCommand += .8;
-            override = true;
         }
         else if (abs(angleError) > M_PI - 0.3)
         {
             rightCommand -= .8;
             leftCommand -= .8;
-            override = true;
         }
         else
         {
@@ -408,6 +406,7 @@ void checkOOB()
 }
 
 Vector2 enemies[2];
+float enemiesDist[2];
 void getEnemies()
 {
     RobotData data = gladiator->robot->getData();
@@ -429,6 +428,12 @@ void getEnemies()
             ++a;
         }
     }
+
+    auto robotPos = gladiator->robot->getData().position;
+    Vector2 posUs{robotPos.x, robotPos.y};
+
+    enemiesDist[0] = (enemies[0] - posUs).norm2();
+    enemiesDist[1] = (enemies[1] - posUs).norm2();
 }
 
 bool canSee(Vector2 v)
@@ -441,30 +446,23 @@ void checkEnemies()
     auto robotPos = gladiator->robot->getData().position;
     Vector2 posUs{robotPos.x, robotPos.y};
 
-    float dist0 = (enemies[0] - posUs).norm2();
-    float dist1 = (enemies[1] - posUs).norm2();
-
-    if (gladiator->weapon->canLaunchRocket() && dist0 < .9 &&
+    if (gladiator->weapon->canLaunchRocket() && enemiesDist[0] < .9 &&
         abs(moduloPi((enemies[0] - posUs).angle() - robotPos.a)) < M_PI / 32)
     {
-        gladiator->log("posUs: %f %f", posUs.x(), posUs.y());
-        gladiator->log("enemyPos: %f %f", enemies[0].x(), enemies[0].y());
-        gladiator->log("rot: %f", robotPos.a);
-        gladiator->log("angle0: %f", (enemies[0] - posUs).angle() - robotPos.a);
-        gladiator->log("angle0: %f", abs((enemies[0] - posUs).angle() - robotPos.a));
         gladiator->weapon->launchRocket();
     }
-    else if (gladiator->weapon->canLaunchRocket() && dist1 < .9 &&
+    else if (gladiator->weapon->canLaunchRocket() && enemiesDist[1] < .9 &&
              abs(moduloPi((enemies[1] - posUs).angle() - robotPos.a)) < M_PI / 32)
     {
-        gladiator->log("posUs: %f %f", posUs.x(), posUs.y());
-        gladiator->log("enemyPos: %f %f", enemies[1].x(), enemies[1].y());
-        gladiator->log("rot: %f", robotPos.a);
-        gladiator->log("angle1: %f", (enemies[1] - posUs).angle() - robotPos.a);
         gladiator->weapon->launchRocket();
     }
-    // else if (dist0 < 2 || dist1 < 2)
-    //     strat = Strat::ATTACK;
+    else if (enemiesDist[0] < 0.5 || enemiesDist[1] < 0.5)
+    {
+        if (enemiesDist[0] < 0.1 || enemiesDist[1] < 0.1)
+            strat = Strat::SPIN;
+        else
+            strat = Strat::ATTACK;
+    }
 }
 
 void reset()
@@ -527,6 +525,7 @@ void loop()
             getEnemies();
             checkEnemies();
         }
+        // strat = Strat::SPIN;
 
         if (strat == Strat::OOB)
         {
@@ -538,9 +537,17 @@ void loop()
         {
             aim(gladiator, MiddlePos, false, true);
         }
+        else if (strat == Strat::SPIN)
+        {
+            gladiator->control->setWheelSpeed(WheelAxis::LEFT, 1);
+            gladiator->control->setWheelSpeed(WheelAxis::RIGHT, -1);
+        }
         else if (strat == Strat::ATTACK)
         {
-            // checkEscape();
+            if (enemiesDist[0] < enemiesDist[1])
+                aim(gladiator, enemies[0], false, true);
+            else
+                aim(gladiator, enemies[1], false, true);
         }
         else if (strat == Strat::GOTO)
         {
