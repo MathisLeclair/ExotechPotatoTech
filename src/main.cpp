@@ -1,6 +1,7 @@
 #include "gladiator.h"
 #include <cmath>
 #include <chrono>
+#include "main.h"
 // x,y représentent des coordonnées en m
 // Vector{1.5,1.5} représente le point central
 // Pour convertir une cordonnée de cellule (i,j) (0<=i<=13, 0<=j<=13) :
@@ -292,61 +293,17 @@ void gotoPoints(bool getCoin)
         depopSquare = *qstart;
         qstart++;
         square = depopSquare->eastSquare;
-        if (square && !history[square->i][square->j])
-        {
-            *qend = square;
-            qend++;
-            history[square->i][square->j] = depopSquare;
-            if (getCoin)
-            {
-                if (square->coin.value == 1)
-                    break;
-            }
-            else if (square->possession != initRobotData.teamId)
-                break;
-        }
+        if (square && !history[square->i][square->j] && checkSquare(qend, square, depopSquare, getCoin))
+            break;
         square = depopSquare->westSquare;
-        if (square && !history[square->i][square->j])
-        {
-            *qend = square;
-            qend++;
-            history[square->i][square->j] = depopSquare;
-            if (getCoin)
-            {
-                if (square->coin.value == 1)
-                    break;
-            }
-            else if (square->possession != initRobotData.teamId)
-                break;
-        }
+        if (square && !history[square->i][square->j] && checkSquare(qend, square, depopSquare, getCoin))
+            break;
         square = depopSquare->southSquare;
-        if (square && !history[square->i][square->j])
-        {
-            *qend = square;
-            qend++;
-            history[square->i][square->j] = depopSquare;
-            if (getCoin)
-            {
-                if (square->coin.value == 1)
-                    break;
-            }
-            else if (square->possession != initRobotData.teamId)
-                break;
-        }
+        if (square && !history[square->i][square->j] && checkSquare(qend, square, depopSquare, getCoin))
+            break;
         square = depopSquare->northSquare;
-        if (square && !history[square->i][square->j])
-        {
-            *qend = square;
-            qend++;
-            history[square->i][square->j] = depopSquare;
-            if (getCoin)
-            {
-                if (square->coin.value == 1)
-                    break;
-            }
-            else if (square->possession != initRobotData.teamId)
-                break;
-        }
+        if (square && !history[square->i][square->j] && checkSquare(qend, square, depopSquare, getCoin))
+            break;
     }
 
     path = q + 143;
@@ -367,6 +324,26 @@ void gotoPoints(bool getCoin)
     }
 }
 
+bool checkSquare(const MazeSquare **&qend, const MazeSquare *square, const MazeSquare *depopSquare, bool getCoin)
+{
+    history[square->i][square->j] = depopSquare;
+    if (isDangerous(square->i, square->j))
+        return false;
+    *qend = square;
+    qend++;
+    if (getCoin)
+    {
+        if (square->coin.value == 1)
+        {
+            return true;
+        };
+    }
+    else if (square->possession != initRobotData.teamId)
+    {
+        return true;
+    };
+    return false;
+}
 bool followPath()
 {
     if (*path == nullptr)
@@ -637,7 +614,7 @@ void loop()
             if (followPath())
                 strat = Strat::NONE;
         }
-        
+
         if (strat == Strat::NONE)
         {
             // Check if robot has rocket
