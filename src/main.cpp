@@ -51,20 +51,29 @@ using namespace std;
 Gladiator *gladiator;
 
 const MazeSquare *maze[12][12];
-const MazeSquare *history[12][12];
+const Coin *coins[42];
+
 bool initiated = false;
 
 void fillMap()
 {
+    const Coin **c = coins;
     for (int x = 0; x < 12; x++)
     {
         for (int y = 0; y < 12; y++)
         {
             maze[x][y] = gladiator->maze->getSquare(x, y);
+            if (maze[x][y]->coin.value == 1)
+            {
+                *c = &(maze[x][y]->coin);
+                c++;
+            }
         }
     }
+    *c = nullptr;
 }
 
+const MazeSquare *history[12][12];
 void clearHistory()
 {
     for (int x = 0; x < 12; x++)
@@ -206,15 +215,15 @@ bool followPath()
 bool isDangerous(int i, int j)
 {
     return (
-        maze[i][j]->danger ||
         (maze[i][j]->eastSquare == nullptr &&
          maze[i][j]->westSquare == nullptr &&
          maze[i][j]->northSquare == nullptr &&
-         maze[i][j]->southSquare == nullptr));
+         maze[i][j]->southSquare == nullptr)
+    );
 }
 
 int destX, destY = -1;
-void setDestination()
+void setRandomDestination()
 {
     gladiator->log("Searching for destionation...");
     destX = rand() % 12;
@@ -230,6 +239,50 @@ void setDestination()
     gladiator->log("%d", destY);
 }
 
+void setBestDestination()
+{
+    // First try to get coin
+    const Coin *coin = *coins;
+    while (coin != nullptr)
+    {
+        if (coin->value == 1)
+        {
+            Serial.print("Going to coin: ");
+            Serial.print(coin->p.x, 2);
+            Serial.print(" ");
+            Serial.println(coin->p.y, 2);
+            destX = (int)(coin->p.x * 4);
+            destY = (int)(coin->p.y * 4);
+            Serial.print("Going to space: ");
+            Serial.print(destX);
+            Serial.print(" ");
+            Serial.println(destY);
+            break;
+        }
+    }
+    // If no coin, random
+}
+
+bool changeDest = false;
+bool handleDanger = false;
+Vector2 safePos{1.5, 1.5};
+void checkDanger()
+{
+    if (isDangerous(destX, destY))
+    {
+        Serial.println("Destination is dangerous, updating");
+        changeDest = true;
+    }
+    const MazeSquare *robSquare = gladiator->maze->getNearestSquare();
+    if (isDangerous(robSquare->i, robSquare->j))
+    {
+        Serial.println("Robot is in danger");
+        handleDanger = true;
+    }
+    else
+        handleDanger = false;
+}
+
 void reset()
 {
     initiated = false;
@@ -240,7 +293,7 @@ void reset()
 void initialize()
 {
     fillMap();
-    setDestination();
+    setBestDestination();
     findPath(destX, destY);
     initiated = true;
 }
@@ -254,16 +307,37 @@ void setup()
     // gladiator->game->enableFreeMode(RemoteMode::ON);
 }
 
+int loopTick = 0;
 void loop()
 {
+    loopTick++;
     if (gladiator->game->isStarted())
     {
         if (!initiated)
             initialize();
-        if (followPath())
+        
+        // Check if bot is in danger
+        // This can toggle handleDanger or changeDest
+        if (loopTick % 5 == 0)
+            checkDanger();
+        
+        if (handleDanger)
         {
-            setDestination();
-            findPath(destX, destY);
+            aim(gladiator, safePos, false);
+        }
+        else
+        {
+            // Set new dest if requested
+            // This can be set by followPath or handleDanger
+            if (changeDest)
+            {
+                Serial.println("Changing destination");
+                setBestDestination();
+                findPath(destX, destY);
+                changeDest = false;
+            }
+            // New destination if destination reached
+            changeDest = followPath();
         }
     }
     // delay(10); // boucle à 100Hz
