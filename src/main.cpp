@@ -99,6 +99,18 @@ void clearHistory()
             history[y][x] = NULL;
 }
 
+bool coinsExist()
+{
+    const Coin **c = coins;
+    while (*c != nullptr)
+    {
+        if ((*c)->value)
+            return true;
+        c++;
+    }
+    return false;
+}
+
 inline float moduloPi(float a) // return angle in [-pi; pi]
 {
     return (a < 0.0) ? (std::fmod(a - M_PI, 2 * M_PI) + M_PI) : (std::fmod(a + M_PI, 2 * M_PI) - M_PI);
@@ -265,7 +277,7 @@ void findPath(int x, int y)
     }
 }
 
-void gotoPoints()
+void gotoPoints(bool getCoin)
 {
     clearHistory();
     const MazeSquare *start = gladiator->maze->getNearestSquare();
@@ -285,7 +297,10 @@ void gotoPoints()
             *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
-            if (square->possession != initRobotData.teamId)
+            if (getCoin)
+                if (square->coin.value == 1)
+                    break;
+            else if (square->possession != initRobotData.teamId)
                 break;
         }
         square = depopSquare->westSquare;
@@ -294,7 +309,10 @@ void gotoPoints()
             *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
-            if (square->possession != initRobotData.teamId)
+            if (getCoin)
+                if (square->coin.value == 1)
+                    break;
+            else if (square->possession != initRobotData.teamId)
                 break;
         }
         square = depopSquare->southSquare;
@@ -303,7 +321,10 @@ void gotoPoints()
             *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
-            if (square->possession != initRobotData.teamId)
+            if (getCoin)
+                if (square->coin.value == 1)
+                    break;
+            else if (square->possession != initRobotData.teamId)
                 break;
         }
         square = depopSquare->northSquare;
@@ -312,7 +333,10 @@ void gotoPoints()
             *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
-            if (square->possession != initRobotData.teamId)
+            if (getCoin)
+                if (square->coin.value == 1)
+                    break;
+            else if (square->possession != initRobotData.teamId)
                 break;
         }
     }
@@ -465,7 +489,7 @@ bool canSee(Vector2 v)
 
 void checkEnemies()
 {
-    auto robotPos = gladiator->robot->getData().position;
+    Position robotPos = gladiator->robot->getData().position;
     Vector2 posUs{robotPos.x, robotPos.y};
 
     if (gladiator->weapon->canLaunchRocket() && enemiesDist[0] < .9 &&
@@ -506,6 +530,8 @@ void initialize()
 {
     fillMap();
     initRobotData = gladiator->robot->getData();
+    gladiator->weapon->initWeapon(WeaponPin::M1, WeaponMode::SERVO);
+    gladiator->weapon->setTarget(WeaponPin::M1, 27);
     initiated = true;
 }
 
@@ -601,11 +627,16 @@ void loop()
             // checkEscape();
 
             if (followPath())
-                gotoPoints();
+                strat = Strat::NONE;
         }
-        else if (strat == Strat::NONE)
+        
+        if (strat == Strat::NONE)
         {
-            gotoPoints();
+            // Check if robot has rocket
+            if (!gladiator->weapon->canLaunchRocket() && coinsExist())
+                gotoPoints(true);
+            else
+                gotoPoints(false);
         }
     }
 }
