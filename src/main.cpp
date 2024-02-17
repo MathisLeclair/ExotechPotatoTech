@@ -87,7 +87,7 @@ inline float moduloPi(float a) // return angle in [-pi; pi]
     return (a < 0.0) ? (std::fmod(a - M_PI, 2 * M_PI) + M_PI) : (std::fmod(a + M_PI, 2 * M_PI) - M_PI);
 }
 
-inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs)
+inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool emergency)
 {
     constexpr float POS_REACHED_THRESHOLD = 0.08;
 
@@ -110,8 +110,8 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs)
     }
     else
     {
-        float K1 = .7;
-        float K2 = 1.5;
+        float K1 = emergency ? 2 : .7;
+        float K2 = emergency ? 5 : 1.5;
 
         // rotate
         rightCommand = angleError * abs(angleError) * K1;
@@ -208,7 +208,7 @@ bool followPath()
     float x = ((float)((*path)->i) + 0.5) / 4.0;
     float y = ((float)((*path)->j) + 0.5) / 4.0;
     Vector2 pathToAim{x, y};
-    if (aim(gladiator, pathToAim, false))
+    if (aim(gladiator, pathToAim, false, false))
         path++;
     return false;
 }
@@ -341,7 +341,7 @@ void loop()
 
         if (handleDanger)
         {
-            aim(gladiator, safePos, false);
+            aim(gladiator, safePos, false, true);
         }
         else
         {
