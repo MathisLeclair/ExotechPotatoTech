@@ -251,26 +251,26 @@ void setRandomDestination()
 void setBestDestination()
 {
     // First try to get coin
-    const Coin *coin = *coins;
-    while (coin != nullptr)
+    const Coin **c = coins;
+    while (*c != nullptr)
     {
-        if (coin->value == 1)
+        if ((*c)->value == 1)
         {
-            destX = (int)(coin->p.x * 4);
-            destY = (int)(coin->p.y * 4);
+            destX = (int)((*c)->p.x * 4);
+            destY = (int)((*c)->p.y * 4);
             if (isDangerous(destX, destY))
             {
-                coin++;
+                (*c)++;
                 continue;
             }
-            gladiator->log("Going to coin: x:%f y:%f", coin->p.x, coin->p.y);
+            gladiator->log("Going to coin: x:%f y:%f", (*c)->p.x, (*c)->p.y);
             gladiator->log("Going to space: x:%d y:%d", destX, destY);
             break;
         }
-        coin++;
+        c++;
     }
     // If no coin, random
-    if (coin == nullptr)
+    if ((*c) == nullptr)
         setRandomDestination();
 }
 
@@ -303,19 +303,12 @@ void reset()
     *path = nullptr;
 }
 
-void rolIt()
-{
-    gladiator->weapon->initWeapon(WeaponPin::M1, WeaponMode::PWM);
-    gladiator->weapon->setTarget(WeaponPin::M1, 255);
-}
-
 void initialize()
 {
     fillMap();
     setBestDestination();
     findPath(destX, destY);
     initiated = true;
-    rolIt();
 }
 
 void setup()
@@ -336,7 +329,6 @@ enum Strat
 
 void loop()
 {
-    rolIt();
     if (gladiator->game->isStarted())
     {
         if (!initiated)
