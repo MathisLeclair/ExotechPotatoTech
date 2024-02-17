@@ -71,6 +71,8 @@ uint64_t timestamp;
 uint64_t tick = 0;
 RobotData initRobotData;
 
+Vector2 deads[4];
+
 void fillMap()
 {
     const Coin **c = coins;
@@ -363,9 +365,23 @@ bool squareIsOutsideOfMap(int i, int j)
     return false;
 }
 
+bool squareWithDeadBodies(int i, int j)
+{
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        if (deads[i] == Vector2(i, j))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool isDangerous(int i, int j)
 {
-    return squareIsOutsideOfMap(i, j);
+    bool danger = squareIsOutsideOfMap(i, j);
+    danger = squareWithDeadBodies(i, j);
+    return danger;
 }
 
 int destX, destY = -1;
@@ -421,7 +437,12 @@ void getEnemies()
             continue;
         RobotData enemy = gladiator->game->getOtherRobotData(l.ids[i]);
         // Skip dead enemies and teammates
-        if (enemy.lifes == 0 || enemy.teamId == data.teamId)
+        if (enemy.lifes == 0)
+        {
+            deads[i] = Vector2((int)(enemy.position.x * 4), (int)(enemy.position.y * 4));
+            gladiator->log("new deads[%d][x]=%f deads[%d][y]=%f, raw: %f %f", i, deads[i].x(), i, deads[i].y(), enemy.position.x, enemy.position.y);
+        }
+        else if (enemy.teamId == data.teamId)
             continue;
         else
         {
@@ -524,12 +545,18 @@ void attack(int i)
 
     if (abs(moduloPi((enemies[i] - posUs).angle() - robotPos.a)) > M_PI / 4)
     {
-        gladiator->control->setWheelSpeed(WheelAxis::LEFT, (moduloPi((enemies[i] - posUs).angle() - robotPos.a)) / 6);
-        gladiator->control->setWheelSpeed(WheelAxis::RIGHT, (moduloPi((enemies[i] - posUs).angle() - robotPos.a)) / 6);
+        gladiator->control->setWheelSpeed(WheelAxis::LEFT, (moduloPi((enemies[i] - posUs).angle() - robotPos.a)) / 3);
+        gladiator->control->setWheelSpeed(WheelAxis::RIGHT, (moduloPi((enemies[i] - posUs).angle() - robotPos.a)) / 3);
     }
     else
         aim(gladiator, enemies[i], false, true);
 }
+
+// todo: esquive de missiles
+// todo: esquive de morts
+// todo: esquive d'allié
+// todo: si angle tir almost exact, tourner tirer
+// todo: opti code
 
 void loop()
 {
