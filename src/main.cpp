@@ -52,6 +52,17 @@ const MazeSquare *maze[12][12];
 const MazeSquare *history[12][12];
 bool initiated = false;
 
+void fillMap()
+{
+    for (int x = 0; x < 12; x++)
+    {
+        for (int y = 0; y < 12; y++)
+        {
+            maze[x][y] = gladiator->maze->getSquare(x, y);
+        }
+    }
+}
+
 void clearHistory()
 {
     for (int x = 0; x < 12; x++)
@@ -67,7 +78,7 @@ inline float moduloPi(float a) // return angle in [-pi; pi]
 inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs)
 {
     constexpr float ANGLE_REACHED_THRESHOLD = 0.1;
-    constexpr float POS_REACHED_THRESHOLD = 0.2;
+    constexpr float POS_REACHED_THRESHOLD = 0.15;
 
     auto posRaw = gladiator->robot->getData().position;
 
@@ -177,37 +188,64 @@ void findPath(int x, int y)
     }
 }
 
-void followPath()
+bool followPath()
 {
     if (*path == nullptr)
-        return;
+        return true;
     float x = ((float)((*path)->i) + 0.5) / 4.0;
     float y = ((float)((*path)->j) + 0.5) / 4.0;
     Vector2 pathToAim{x, y};
     if (aim(gladiator, pathToAim, false))
         path++;
+    return false;
+}
+
+bool isDangerous(int i, int j)
+{
+    return ( \
+        maze[i][j]->danger || \
+        ( \
+            maze[i][j]->eastSquare == nullptr && \
+            maze[i][j]->westSquare == nullptr && \
+            maze[i][j]->northSquare == nullptr && \
+            maze[i][j]->southSquare == nullptr \
+        ) \
+    );
+}
+
+int destX, destY = -1;
+void setDestination()
+{
+    Serial.println("Searching for destionation...");
+    destX = rand() % 12;
+    destY = rand() % 12;
+    while (destX == -1 || destY == -1 || isDangerous(destX, destY))
+    {
+        destX = rand() % 12;
+        destY = rand() % 12;
+    }
+    Serial.print("New destination: ");
+    Serial.print(destX);
+    Serial.print(" ");
+    Serial.println(destY);
 }
 
 void reset()
 {
     initiated = false;
+    path = q + 143;
+    *path = nullptr;
 }
 
 void initialize()
 {
-    for (int x = 0; x < 12; x++)
-    {
-        for (int y = 0; y < 12; y++)
-        {
-            maze[x][y] = gladiator->maze->getSquare(x, y);
-        }
-    }
+    fillMap();
     Serial.print("Maze size: ");
     Serial.println(gladiator->maze->getSize());
     Serial.print("Maze space size: ");
     Serial.println(gladiator->maze->getSquareSize());
-    findPath(11, 11);
-
+    setDestination();
+    findPath(destX, destY);
     initiated = true;
 }
 
@@ -227,7 +265,11 @@ void loop()
     {
         if (!initiated)
             initialize();
-        followPath();
+        if (followPath())
+        {
+            setDestination();
+            findPath(destX, destY);
+        }
     }
     // cout << "loop END" << endl;
     delay(100); // boucle à 100Hz
