@@ -344,6 +344,7 @@ bool checkSquare(const MazeSquare **&qend, const MazeSquare *square, const MazeS
     };
     return false;
 }
+
 bool followPath()
 {
     if (*path == nullptr)
@@ -620,7 +621,12 @@ void loop()
         {
             // Check if robot has rocket
             if (!gladiator->weapon->canLaunchRocket() && coinsExist())
+            {
                 gotoPoints(true);
+                // If rocket path failed, try points instead
+                if (strat == Strat::OOB)
+                    gotoPoints(false);
+            }
             else
                 gotoPoints(false);
         }
