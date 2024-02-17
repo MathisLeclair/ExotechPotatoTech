@@ -69,6 +69,7 @@ const Coin *coins[42];
 bool initiated = false;
 uint64_t timestamp;
 uint64_t tick = 0;
+RobotData initRobotData;
 
 void fillMap()
 {
@@ -282,7 +283,7 @@ void gotoPoints()
             *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
-            if (square->possession != gladiator->robot->getData().teamId)
+            if (square->possession != initRobotData.teamId)
                 break;
         }
         square = depopSquare->westSquare;
@@ -291,7 +292,7 @@ void gotoPoints()
             *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
-            if (square->possession != gladiator->robot->getData().teamId)
+            if (square->possession != initRobotData.teamId)
                 break;
         }
         square = depopSquare->southSquare;
@@ -300,7 +301,7 @@ void gotoPoints()
             *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
-            if (square->possession != gladiator->robot->getData().teamId)
+            if (square->possession != initRobotData.teamId)
                 break;
         }
         square = depopSquare->northSquare;
@@ -309,7 +310,7 @@ void gotoPoints()
             *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
-            if (square->possession != gladiator->robot->getData().teamId)
+            if (square->possession != initRobotData.teamId)
                 break;
         }
     }
@@ -478,6 +479,7 @@ void reset()
 void initialize()
 {
     fillMap();
+    initRobotData = gladiator->robot->getData();
     initiated = true;
 }
 
