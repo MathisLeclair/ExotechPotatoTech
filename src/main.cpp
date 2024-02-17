@@ -303,12 +303,19 @@ void reset()
     *path = nullptr;
 }
 
+void rolIt()
+{
+    gladiator->weapon->initWeapon(WeaponPin::M1, WeaponMode::PWM);
+    gladiator->weapon->setTarget(WeaponPin::M1, 255);
+}
+
 void initialize()
 {
     fillMap();
     setBestDestination();
     findPath(destX, destY);
     initiated = true;
+    rolIt();
 }
 
 void setup()
