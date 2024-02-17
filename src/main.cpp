@@ -150,8 +150,6 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
         }
         else
         {
-            if (tick % 500)
-                gladiator->log("FAR adjust");
             float K = .2;
             rightCommand = angleError * K;
             leftCommand = -angleError * K;
@@ -286,7 +284,7 @@ void gotoPoints()
             *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
-            if (square->possession < 1)
+            if (square->possession != gladiator->robot->getData().teamId)
                 break;
         }
         square = depopSquare->westSquare;
@@ -295,7 +293,7 @@ void gotoPoints()
             *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
-            if (square->possession < 1)
+            if (square->possession != gladiator->robot->getData().teamId)
                 break;
         }
         square = depopSquare->southSquare;
@@ -304,7 +302,7 @@ void gotoPoints()
             *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
-            if (square->possession < 1)
+            if (square->possession != gladiator->robot->getData().teamId)
                 break;
         }
         square = depopSquare->northSquare;
@@ -313,7 +311,7 @@ void gotoPoints()
             *qend = square;
             qend++;
             history[square->i][square->j] = depopSquare;
-            if (square->possession < 1)
+            if (square->possession != gladiator->robot->getData().teamId)
                 break;
         }
     }
@@ -358,11 +356,9 @@ bool squareIsOutsideOfMap(int i, int j)
 {
     uint64_t actualTime = timeSinceEpochMillisec();
     int reduc = (actualTime - timestamp) / 20000;
-    gladiator->log("actual: %lud, time: %lud reduc: %d", actualTime, timestamp, reduc);
 
     if (i > 11 - reduc || j > 11 - reduc || i < reduc || j < reduc)
     {
-        gladiator->log("squareIsOutsideOfMap %d %d", i, j);
         return true;
     }
     return false;
@@ -404,7 +400,6 @@ void checkOOB()
     // OOB
     if (robSquare == nullptr || isDangerous(robSquare->i, robSquare->j) || weFucked(robSquare))
     {
-        gladiator->log("Robot OOB");
         strat = Strat::OOB;
         return;
     }
@@ -449,10 +444,25 @@ void checkEnemies()
     float dist0 = (enemies[0] - posUs).norm2();
     float dist1 = (enemies[1] - posUs).norm2();
 
-    if (dist0 < 3 && canSee(enemies[0]))
+    if (gladiator->weapon->canLaunchRocket() && dist0 < .9 &&
+        abs(moduloPi((enemies[0] - posUs).angle() - robotPos.a)) < M_PI / 32)
+    {
+        gladiator->log("posUs: %f %f", posUs.x(), posUs.y());
+        gladiator->log("enemyPos: %f %f", enemies[0].x(), enemies[0].y());
+        gladiator->log("rot: %f", robotPos.a);
+        gladiator->log("angle0: %f", (enemies[0] - posUs).angle() - robotPos.a);
+        gladiator->log("angle0: %f", abs((enemies[0] - posUs).angle() - robotPos.a));
         gladiator->weapon->launchRocket();
-    else if (dist1 < 3 && canSee(enemies[1]))
+    }
+    else if (gladiator->weapon->canLaunchRocket() && dist1 < .9 &&
+             abs(moduloPi((enemies[1] - posUs).angle() - robotPos.a)) < M_PI / 32)
+    {
+        gladiator->log("posUs: %f %f", posUs.x(), posUs.y());
+        gladiator->log("enemyPos: %f %f", enemies[1].x(), enemies[1].y());
+        gladiator->log("rot: %f", robotPos.a);
+        gladiator->log("angle1: %f", (enemies[1] - posUs).angle() - robotPos.a);
         gladiator->weapon->launchRocket();
+    }
     // else if (dist0 < 2 || dist1 < 2)
     //     strat = Strat::ATTACK;
 }
@@ -513,7 +523,10 @@ void loop()
         if (strat != Strat::OOB && fastLoop())
             checkOOB();
         if (slowLoop())
+        {
             getEnemies();
+            checkEnemies();
+        }
 
         if (strat == Strat::OOB)
         {
