@@ -245,7 +245,7 @@ void setBestDestination()
             gladiator->log("Going to coin: x:%f y:%f", coin->p.x, coin->p.y);
             destX = (int)(coin->p.x * 4);
             destY = (int)(coin->p.y * 4);
-            gladiator->log("Going to space: x:%d y:", destX, destY);
+            gladiator->log("Going to space: x:%d y:%d", destX, destY);
             break;
         }
         coin++;
@@ -259,6 +259,12 @@ Vector2 safePos{1.5, 1.5};
 void checkDanger()
 {
     const MazeSquare *robSquare = gladiator->maze->getNearestSquare();
+    if (robSquare == nullptr)
+    {
+        gladiator->log("Robot square outside of map");
+        handleDanger = true;
+        return;
+    }
     if (isDangerous(robSquare->i, robSquare->j))
     {
         gladiator->log("Robot is in danger");
@@ -268,9 +274,11 @@ void checkDanger()
         handleDanger = false;
 }
 
+int loopTick = 0;
 void reset()
 {
     initiated = false;
+    loopTick = 0;
     path = q + 143;
     *path = nullptr;
 }
@@ -299,7 +307,6 @@ enum Strat
     ATTACK
 };
 
-int loopTick = 0;
 void loop()
 {
     loopTick++;
@@ -310,7 +317,7 @@ void loop()
 
         // Check if bot is in danger
         // This can toggle handleDanger or changeDest
-        if (loopTick % 15 == 0)
+        if (loopTick % 50 == 0)
             checkDanger();
 
         if (handleDanger)
