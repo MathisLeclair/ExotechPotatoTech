@@ -66,6 +66,7 @@ const Coin *coins[42];
 
 bool initiated = false;
 uint64_t timestamp;
+uint64_t tick = 0;
 
 void fillMap()
 {
@@ -111,6 +112,22 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     float targetAngle = posError.angle();
     float angleError = moduloPi(targetAngle - posRaw.a);
 
+    bool direction = true;
+    if (angleError > M_PI_2)
+    {
+        if (tick % 500)
+            gladiator->log("backwards RIGHT");
+        direction = false;
+        angleError -= M_PI;
+    }
+    else if (angleError < -M_PI_2)
+    {
+        if (tick % 500)
+            gladiator->log("backwards LEFT");
+        direction = false;
+        angleError += M_PI;
+    }
+
     bool targetReached = false;
     float leftCommand = 0.f;
     float rightCommand = 0.f;
@@ -121,21 +138,35 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     }
     else if (posError.norm2() > 0.8)
     {
-        gladiator->log("angle: %f", angleError);
         if (abs(angleError) < 0.3)
         {
+            if (tick % 500)
+                gladiator->log("FAR fullspeed");
             rightCommand += .8;
             leftCommand += .8;
         }
+        else if (abs(angleError) > M_PI - 0.3)
+        {
+            if (tick % 500)
+                gladiator->log("FAR fullspeed BACK");
+            rightCommand -= .8;
+            leftCommand -= .8;
+        }
         else
         {
+            if (tick % 500)
+                gladiator->log("FAR adjust");
             // float K = .7;
             float K = .2;
             rightCommand = angleError * K;
             leftCommand = -angleError * K;
         }
-        gladiator->log("rightCommand: %f", rightCommand);
-        gladiator->log("leftCommand: %f", leftCommand);
+        if (tick % 500)
+        {
+            gladiator->log("angle: %f", angleError);
+            gladiator->log("rightCommand: %f", rightCommand);
+            gladiator->log("leftCommand: %f", leftCommand);
+        }
     }
     else
     {
@@ -153,8 +184,17 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
         leftCommand += factor + .1;  //-angleError*0.1   => terme optionel, "pseudo correction angulaire";
     }
 
-    gladiator->control->setWheelSpeed(WheelAxis::LEFT, leftCommand);
-    gladiator->control->setWheelSpeed(WheelAxis::RIGHT, rightCommand);
+    if (direction)
+    {
+        gladiator->control->setWheelSpeed(WheelAxis::LEFT, leftCommand);
+        gladiator->control->setWheelSpeed(WheelAxis::RIGHT, rightCommand);
+    }
+    else
+    {
+        // Inversed
+        gladiator->control->setWheelSpeed(WheelAxis::LEFT, rightCommand * -1.0);
+        gladiator->control->setWheelSpeed(WheelAxis::RIGHT, leftCommand * -1.0);
+    }
 
     if (showLogs || targetReached)
     {
@@ -435,12 +475,10 @@ void checkOOB()
 //         }
 //         else
 //         {
-
 //         }
 //     }
 // }
 
-uint64_t tick = 0;
 void reset()
 {
     tick = 0;
