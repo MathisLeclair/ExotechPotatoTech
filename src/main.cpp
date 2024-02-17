@@ -459,7 +459,7 @@ void checkEnemies()
     }
     else if (enemiesDist[0] < 0.5 || enemiesDist[1] < 0.5)
     {
-        if (enemiesDist[0] < 0.1 || enemiesDist[1] < 0.1)
+        if (enemiesDist[0] < 0.15 || enemiesDist[1] < 0.15)
             strat = Strat::SPIN;
         else
             strat = Strat::ATTACK;
@@ -512,6 +512,20 @@ bool verySlowLoop()
     return !(tick % 500);
 }
 
+void attack(int i)
+{
+    auto robotPos = gladiator->robot->getData().position;
+    Vector2 posUs{robotPos.x, robotPos.y};
+
+    if (abs(moduloPi((enemies[i] - posUs).angle() - robotPos.a)) > M_PI / 8)
+    {
+        gladiator->control->setWheelSpeed(WheelAxis::LEFT, 0.4);
+        gladiator->control->setWheelSpeed(WheelAxis::RIGHT, -0.4);
+    }
+    else
+        aim(gladiator, enemies[i], false, true);
+}
+
 void loop()
 {
     if (gladiator->game->isStarted())
@@ -547,9 +561,9 @@ void loop()
         else if (strat == Strat::ATTACK)
         {
             if (enemiesDist[0] < enemiesDist[1])
-                aim(gladiator, enemies[0], false, true);
+                attack(0);
             else
-                aim(gladiator, enemies[1], false, true);
+                attack(1);
         }
         else if (strat == Strat::GOTO)
         {
