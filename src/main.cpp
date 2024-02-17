@@ -389,7 +389,8 @@ bool squareWithDeadBodies(int i, int j)
 bool isDangerous(int i, int j)
 {
     bool danger = squareIsOutsideOfMap(i, j);
-    danger = squareWithDeadBodies(i, j);
+    if (!danger)
+        danger = squareWithDeadBodies(i, j);
     return danger;
 }
 
