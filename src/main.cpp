@@ -459,17 +459,22 @@ void checkEnemies()
     }
     else if (enemiesDist[0] < 0.5 || enemiesDist[1] < 0.5)
     {
-        if (enemiesDist[0] < 0.15 || enemiesDist[1] < 0.15)
+        if (enemiesDist[0] < 0.17 || enemiesDist[1] < 0.17)
             strat = Strat::SPIN;
         else
             strat = Strat::ATTACK;
+    }
+    else
+    {
+        if (strat == Strat::ATTACK || strat == Strat::SPIN)
+            strat = NONE;
     }
 }
 
 void reset()
 {
     tick = 0;
-    timestamp = timeSinceEpochMillisec() - 1500;
+    timestamp = timeSinceEpochMillisec() - 2000;
     initiated = false;
     path = q + 143;
     *path = nullptr;
@@ -517,10 +522,10 @@ void attack(int i)
     auto robotPos = gladiator->robot->getData().position;
     Vector2 posUs{robotPos.x, robotPos.y};
 
-    if (abs(moduloPi((enemies[i] - posUs).angle() - robotPos.a)) > M_PI / 8)
+    if (abs(moduloPi((enemies[i] - posUs).angle() - robotPos.a)) > M_PI / 4)
     {
-        gladiator->control->setWheelSpeed(WheelAxis::LEFT, 0.4);
-        gladiator->control->setWheelSpeed(WheelAxis::RIGHT, -0.4);
+        gladiator->control->setWheelSpeed(WheelAxis::LEFT, (moduloPi((enemies[i] - posUs).angle() - robotPos.a)) / 6);
+        gladiator->control->setWheelSpeed(WheelAxis::RIGHT, (moduloPi((enemies[i] - posUs).angle() - robotPos.a)) / 6);
     }
     else
         aim(gladiator, enemies[i], false, true);
@@ -541,7 +546,6 @@ void loop()
             getEnemies();
             checkEnemies();
         }
-        // strat = Strat::SPIN;
 
         if (strat == Strat::OOB)
         {
