@@ -280,7 +280,7 @@ void setRandomPath()
         destX = rand() % 12;
         destY = rand() % 12;
         findPath(destX, destY);
-        if (isDangerous(destX, destY) || pathIsDangerous())
+        if (isDangerous(destX, destY))
             destX = -1;
     }
     gladiator->log("New destination: x:%d y:%d", destX, destY);
