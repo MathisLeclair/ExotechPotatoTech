@@ -380,9 +380,10 @@ bool squareIsOutsideOfMap(int i, int j)
 
 bool squareWithDeadBodies(int i, int j)
 {
+    Vector2 v = Vector2(i, j);
     for (uint8_t i = 0; i < 4; i++)
     {
-        if (deads[i] == Vector2(i, j))
+        if (deads[i] == v)
         {
             return true;
         }
@@ -392,10 +393,11 @@ bool squareWithDeadBodies(int i, int j)
 
 bool isDangerous(int i, int j)
 {
-    bool danger = squareIsOutsideOfMap(i, j);
-    if (!danger)
-        danger = squareWithDeadBodies(i, j);
-    return danger;
+    if (squareIsOutsideOfMap(i, j))
+        return true;
+    if (squareWithDeadBodies(i, j))
+        return false;
+    return false;
 }
 
 int destX, destY = -1;
