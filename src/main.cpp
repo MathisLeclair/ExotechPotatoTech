@@ -112,6 +112,8 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     {
         float K1 = emergency ? 2 : .7;
         float K2 = emergency ? 5 : 1.5;
+        // float K1 = .2;
+        // float K2 = .5;
 
         // rotate
         rightCommand = angleError * abs(angleError) * K1;
@@ -280,16 +282,20 @@ Vector2 safePos{1.5, 1.5};
 void checkDanger()
 {
     const MazeSquare *robSquare = gladiator->maze->getNearestSquare();
+    // OOB
     if (robSquare == nullptr)
     {
         gladiator->log("Robot square outside of map");
         handleDanger = true;
+        changeDest = true;
         return;
     }
+    // OOM
     if (isDangerous(robSquare->i, robSquare->j))
     {
         gladiator->log("Robot is in danger");
         handleDanger = true;
+        changeDest = true;
     }
     else
         handleDanger = false;
@@ -341,6 +347,8 @@ void loop()
 
         if (handleDanger)
         {
+            Position pos = gladiator->robot->getData().position;
+            gladiator->log("Going to center: %f %f", pos.x, pos.y);
             aim(gladiator, safePos, false, true);
         }
         else
