@@ -131,6 +131,7 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     bool targetReached = false;
     float leftCommand = 0.f;
     float rightCommand = 0.f;
+    bool override = false;
 
     if (posError.norm2() < POS_REACHED_THRESHOLD) //
     {
@@ -144,6 +145,7 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
                 gladiator->log("FAR fullspeed");
             rightCommand += .8;
             leftCommand += .8;
+            override = true
         }
         else if (abs(angleError) > M_PI - 0.3)
         {
@@ -151,6 +153,7 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
                 gladiator->log("FAR fullspeed BACK");
             rightCommand -= .8;
             leftCommand -= .8;
+            override = true
         }
         else
         {
@@ -184,7 +187,7 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
         leftCommand += factor + .1;  //-angleError*0.1   => terme optionel, "pseudo correction angulaire";
     }
 
-    if (direction)
+    if (direction || override)
     {
         gladiator->control->setWheelSpeed(WheelAxis::LEFT, leftCommand);
         gladiator->control->setWheelSpeed(WheelAxis::RIGHT, rightCommand);
@@ -360,7 +363,7 @@ bool squareIsOutsideOfMap(int i, int j)
 {
     uint64_t actualTime = timeSinceEpochMillisec();
     int reduc = (actualTime - timestamp) / 20000;
-    gladiator->log("actual: %lld, time: %lld reduc: %d", actualTime, timestamp, reduc);
+    // gladiator->log("actual: %lud, time: %lud reduc: %d", actualTime, timestamp, reduc);
 
     if (i > 12 - reduc || j > 12 - reduc || i < reduc || j < reduc)
         return true;
