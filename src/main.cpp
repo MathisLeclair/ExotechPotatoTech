@@ -118,7 +118,8 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
         }
         else
         {
-            float K = .7;
+            // float K = .7;
+            float K = .2;
             rightCommand = angleError * K;
             leftCommand = -angleError * K;
         }
@@ -127,14 +128,14 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     }
     else
     {
-        float K1 = .7;
-        float K2 = 1.5;
-        // float K1 = .15;
-        // float K2 = .5;
+        // float K1 = .7;
+        // float K2 = 1.5;
+        float K1 = .2;
+        float K2 = .7;
 
         // rotate
-        rightCommand = angleError * abs(angleError) * K1;
-        leftCommand = -angleError * abs(angleError) * K1;
+        rightCommand = angleError * K1;
+        leftCommand = -angleError * K1;
 
         float factor = posError.norm2() * K2;
         rightCommand += factor + .1; //+angleError*0.1  => terme optionel, "pseudo correction angulaire";
@@ -253,21 +254,36 @@ bool isDangerous(int i, int j)
     return squareIsOutsideOfMap(i, j);
 }
 
+bool pathIsDangerous()
+{
+    const MazeSquare **p = path;
+    while (*p != nullptr)
+    {
+        if (isDangerous((*p)->i, (*p)->j))
+            return true;
+        p++;
+    }
+    return false;
+}
+
 int destX, destY = -1;
-void setRandomDestination()
+void setRandomPath()
 {
     gladiator->log("Searching for destination...");
     destX = rand() % 12;
     destY = rand() % 12;
-    while (destX == -1 || destY == -1 || isDangerous(destX, destY))
+    while (destX == -1 || destY == -1)
     {
         destX = rand() % 12;
         destY = rand() % 12;
+        findPath(destX, destY);
+        if (isDangerous(destX, destY) || pathIsDangerous())
+            destX = -1;
     }
     gladiator->log("New destination: x:%d y:%d", destX, destY);
 }
 
-void setBestDestination()
+bool setCoinPath()
 {
     // First try to get coin
     const Coin **c = coins;
@@ -277,7 +293,8 @@ void setBestDestination()
         {
             destX = (int)((*c)->p.x * 4);
             destY = (int)((*c)->p.y * 4);
-            if (isDangerous(destX, destY))
+            findPath(destX, destY);
+            if (isDangerous(destX, destY) || pathIsDangerous() || *path == nullptr)
             {
                 (*c)++;
                 continue;
@@ -290,7 +307,14 @@ void setBestDestination()
     }
     // If no coin, random
     if ((*c) == nullptr)
-        setRandomDestination();
+        return false;
+    return true;
+}
+
+void setBestPath()
+{
+    if (!setCoinPath())
+        setRandomPath();
 }
 
 bool changeDest = false;
@@ -318,16 +342,10 @@ void checkDanger()
 
     handleDanger = false;
 
-    const MazeSquare **p = path;
-    while (*p != nullptr)
+    if (pathIsDangerous())
     {
-        if (isDangerous((*p)->i, (*p)->j))
-        {
-            gladiator->log("Path is in danger");
-            changeDest = true;
-            break;
-        }
-        p++;
+        gladiator->log("Path is in danger");
+        changeDest = true;
     }
 }
 
@@ -369,8 +387,7 @@ void reset()
 void initialize()
 {
     fillMap();
-    setBestDestination();
-    findPath(destX, destY);
+    setBestPath();
     initiated = true;
 }
 
@@ -406,7 +423,8 @@ void loop()
         if (handleDanger)
         {
             Position pos = gladiator->robot->getData().position;
-            gladiator->log("Going to center: %f %f", pos.x, pos.y);
+            if (tick % 500 == 0)
+                gladiator->log("Going to center: %f %f", pos.x, pos.y);
             aim(gladiator, safePos, false, true);
         }
         else
@@ -416,8 +434,7 @@ void loop()
             if (changeDest)
             {
                 gladiator->log("Changing destination");
-                setBestDestination();
-                findPath(destX, destY);
+                setBestPath();
                 changeDest = false;
             }
             // New destination if destination reached
