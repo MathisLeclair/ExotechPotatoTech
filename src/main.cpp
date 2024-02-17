@@ -46,6 +46,8 @@ private:
     float _x, _y;
 };
 
+using namespace std;
+
 Gladiator *gladiator;
 
 const MazeSquare *maze[12][12];
@@ -202,21 +204,18 @@ bool followPath()
 
 bool isDangerous(int i, int j)
 {
-    return ( \
-        maze[i][j]->danger || \
-        ( \
-            maze[i][j]->eastSquare == nullptr && \
-            maze[i][j]->westSquare == nullptr && \
-            maze[i][j]->northSquare == nullptr && \
-            maze[i][j]->southSquare == nullptr \
-        ) \
-    );
+    return (
+        maze[i][j]->danger ||
+        (maze[i][j]->eastSquare == nullptr &&
+         maze[i][j]->westSquare == nullptr &&
+         maze[i][j]->northSquare == nullptr &&
+         maze[i][j]->southSquare == nullptr));
 }
 
 int destX, destY = -1;
 void setDestination()
 {
-    Serial.println("Searching for destionation...");
+    gladiator->log("Searching for destionation...");
     destX = rand() % 12;
     destY = rand() % 12;
     while (destX == -1 || destY == -1 || isDangerous(destX, destY))
@@ -224,10 +223,10 @@ void setDestination()
         destX = rand() % 12;
         destY = rand() % 12;
     }
-    Serial.print("New destination: ");
-    Serial.print(destX);
-    Serial.print(" ");
-    Serial.println(destY);
+    gladiator->log("New destination: ");
+    gladiator->log("%d", destX);
+    gladiator->log(" ");
+    gladiator->log("%d", destY);
 }
 
 void reset()
@@ -240,10 +239,6 @@ void reset()
 void initialize()
 {
     fillMap();
-    Serial.print("Maze size: ");
-    Serial.println(gladiator->maze->getSize());
-    Serial.print("Maze space size: ");
-    Serial.println(gladiator->maze->getSquareSize());
     setDestination();
     findPath(destX, destY);
     initiated = true;
@@ -260,7 +255,6 @@ void setup()
 
 void loop()
 {
-    // cout << "loop START" << endl;
     if (gladiator->game->isStarted())
     {
         if (!initiated)
@@ -271,6 +265,5 @@ void loop()
             findPath(destX, destY);
         }
     }
-    // cout << "loop END" << endl;
     delay(100); // boucle à 100Hz
 }
