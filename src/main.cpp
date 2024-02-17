@@ -215,7 +215,7 @@ bool followPath()
 bool isDangerous(int i, int j)
 {
     float size = gladiator->maze->getSize();
-    if (i > size * 4 || j > size * 4 || i < (12 - size * 4) || j < (12 - size * 4))
+    if (i > size || j > size || i < (3 - size) || j < (3 - size))
         return true;
     return false;
 }
@@ -259,7 +259,7 @@ Vector2 safePos{1.5, 1.5};
 void checkDanger()
 {
     const MazeSquare *robSquare = gladiator->maze->getNearestSquare();
-    if (isDangerous(robSquare->i, robSquare->j))
+    if (isDangerous(gladiator->robot->getData().position.x, gladiator->robot->getData().position.y))
     {
         gladiator->log("Robot is in danger");
         handleDanger = true;
