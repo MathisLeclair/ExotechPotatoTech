@@ -358,7 +358,7 @@ bool squareIsOutsideOfMap(int i, int j)
 {
     uint64_t actualTime = timeSinceEpochMillisec();
     int reduc = (actualTime - timestamp) / 20000;
-    gladiator->log("actual: %lld, time: %lld reduc: %d", actualTime, timestamp, reduc);
+    gladiator->log("actual: %lud, time: %lud reduc: %d", actualTime, timestamp, reduc);
 
     if (i > 11 - reduc || j > 11 - reduc || i < reduc || j < reduc)
     {
