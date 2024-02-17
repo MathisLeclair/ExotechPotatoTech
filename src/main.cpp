@@ -336,6 +336,7 @@ enum Strat
 
 void loop()
 {
+    rolIt();
     if (gladiator->game->isStarted())
     {
         if (!initiated)
