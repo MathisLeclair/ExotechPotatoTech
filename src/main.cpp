@@ -130,8 +130,8 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     {
         // float K1 = .7;
         // float K2 = 1.5;
-        float K1 = .2;
-        float K2 = .7;
+        float K1 = .4;
+        float K2 = 1;
 
         // rotate
         rightCommand = angleError * K1;
@@ -260,7 +260,10 @@ bool pathIsDangerous()
     while (*p != nullptr)
     {
         if (isDangerous((*p)->i, (*p)->j))
+        {
+            gladiator->log("See this");
             return true;
+        }
         p++;
     }
     return false;
@@ -349,7 +352,7 @@ void checkDanger()
     }
 }
 
-// RobotData allyData = RobotData{} 
+// RobotData allyData = RobotData{}
 // void getNearestEnemy()
 // {
 //     RobotData data = gladiator->robot->getData();
