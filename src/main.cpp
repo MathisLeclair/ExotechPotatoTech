@@ -145,7 +145,7 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
                 gladiator->log("FAR fullspeed");
             rightCommand += .8;
             leftCommand += .8;
-            override = true
+            override = true;
         }
         else if (abs(angleError) > M_PI - 0.3)
         {
@@ -153,7 +153,7 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
                 gladiator->log("FAR fullspeed BACK");
             rightCommand -= .8;
             leftCommand -= .8;
-            override = true
+            override = true;
         }
         else
         {
