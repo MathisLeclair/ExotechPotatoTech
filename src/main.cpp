@@ -173,7 +173,7 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
         leftCommand += factor + .1;  //-angleError*0.1   => terme optionel, "pseudo correction angulaire";
     }
 
-    if (direction || override)
+    if (direction)
     {
         gladiator->control->setWheelSpeed(WheelAxis::LEFT, leftCommand);
         gladiator->control->setWheelSpeed(WheelAxis::RIGHT, rightCommand);
