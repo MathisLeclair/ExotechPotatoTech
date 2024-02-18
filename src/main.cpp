@@ -572,7 +572,7 @@ void attack(int i)
 
     if (abs(moduloPi((enemyPos[i] - posUs).angle() - robotPos.a)) > M_PI / 4)
     {
-        gladiator->control->setWheelSpeed(WheelAxis::LEFT, (moduloPi((enemyPos[i] - posUs).angle() - robotPos.a)) / 3);
+        gladiator->control->setWheelSpeed(WheelAxis::LEFT, -(moduloPi((enemyPos[i] - posUs).angle() - robotPos.a)) / 3);
         gladiator->control->setWheelSpeed(WheelAxis::RIGHT, (moduloPi((enemyPos[i] - posUs).angle() - robotPos.a)) / 3);
     }
     else
@@ -580,10 +580,10 @@ void attack(int i)
 }
 
 // todo: esquive de missiles
-// todo: esquive de morts
 // todo: esquive d'allié
 // todo: si angle tir almost exact, tourner tirer
 // todo: opti code
+// todo: deblocage robot sur nous
 
 void loop()
 {
