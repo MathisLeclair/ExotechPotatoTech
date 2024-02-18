@@ -196,10 +196,10 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
             leftCommand = .001F;
         if (rightCommand == 0)
             rightCommand = .001F;
-        if (leftCommand > rightCommand)
-            multiplier = data.speedLimit / leftCommand;
+        if (abs(leftCommand) > abs(rightCommand))
+            multiplier = data.speedLimit / abs(leftCommand);
         else
-            multiplier = data.speedLimit / rightCommand;
+            multiplier = data.speedLimit / abs(rightCommand);
 
         leftCommand *= multiplier;
         rightCommand *= multiplier;
@@ -487,7 +487,6 @@ void checkWall()
     }
     else if (strat == Strat::WALL)
     {
-        cout << "stop wall" << endl;
         strat = Strat::NONE;
     }
 }
