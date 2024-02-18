@@ -174,16 +174,16 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     {
         // float K1 = .7;
         // float K2 = 1.5;
-        float K1 = .4;
-        float K2 = 1;
+        float K1 = .5;
+        float K2 = 1.2;
 
         // rotate
         rightCommand = angleError * K1;
         leftCommand = -angleError * K1;
 
         float factor = posError.norm2() * K2;
-        rightCommand += factor + .1; //+angleError*0.1  => terme optionel, "pseudo correction angulaire";
-        leftCommand += factor + .1;  //-angleError*0.1   => terme optionel, "pseudo correction angulaire";
+        rightCommand += factor + .15; //+angleError*0.1  => terme optionel, "pseudo correction angulaire";
+        leftCommand += factor + .15;  //-angleError*0.1   => terme optionel, "pseudo correction angulaire";
     }
 
     if (direction)
