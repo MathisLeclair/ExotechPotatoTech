@@ -72,6 +72,7 @@ uint64_t timestamp;
 uint64_t tick = 0;
 RobotData initRobotData;
 
+Vector2 allyPos[5];
 Vector2 deads[20];
 
 void fillMap()
@@ -391,11 +392,26 @@ bool squareWithDeadBodies(int i, int j)
     return false;
 }
 
+bool squareWithAlly(int i, int j)
+{
+    Vector2 v = Vector2(i, j);
+    for (uint8_t i = 0; i < 5; i++)
+    {
+        if (allyPos[i] == v)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool isDangerous(int i, int j)
 {
     if (squareIsOutsideOfMap(i, j))
         return true;
     if (squareWithDeadBodies(i, j))
+        return true;
+    if (squareWithAlly(i, j))
         return true;
     return false;
 }
@@ -438,7 +454,6 @@ void checkOOB()
         strat = Strat::NONE;
 }
 
-Vector2 allyPos;
 Vector2 enemyPos[2];
 float enemiesDist[2];
 void getOtherRobotInfos()
@@ -446,7 +461,6 @@ void getOtherRobotInfos()
     RobotData data = gladiator->robot->getData();
     RobotList l = gladiator->game->getPlayingRobotsId();
     int a = 0;
-    allyPos = Vector2{255, 255};
     enemyPos[0] = Vector2{255, 255};
     enemyPos[1] = Vector2{255, 255};
     for (int i = 0; i < 4; i++)
@@ -457,17 +471,25 @@ void getOtherRobotInfos()
         // Skip dead enemies and teammates
         if (bot.lifes == 0)
         {
-            deads[i * 4] = Vector2((int)(bot.position.x * 4), (int)(bot.position.y * 4));
-            deads[i * 4 + 1] = Vector2((int)(bot.position.x * 4) - 1, (int)(bot.position.y * 4));
-            deads[i * 4 + 2] = Vector2((int)(bot.position.x * 4) + 1, (int)(bot.position.y * 4));
-            deads[i * 4 + 3] = Vector2((int)(bot.position.x * 4), (int)(bot.position.y * 4) - 1);
-            deads[i * 4 + 4] = Vector2((int)(bot.position.x * 4), (int)(bot.position.y * 4) + 1);
+            int botI = (int)(bot.position.x * 4);
+            int botJ = (int)(bot.position.y * 4);
+            deads[i * 4] = Vector2(botI, botJ);
+            deads[i * 4 + 1] = Vector2(botI - 1, botJ);
+            deads[i * 4 + 2] = Vector2(botI + 1, botJ);
+            deads[i * 4 + 3] = Vector2(botI, botJ - 1);
+            deads[i * 4 + 4] = Vector2(botI, botJ + 1);
             // gladiator->log("new deads[%d][x]=%f deads[%d][y]=%f, raw: %f %f", i, deads[i].x(), i, deads[i].y(), enemy.position.x, enemy.position.y);
         }
         // Handle ally
         else if (bot.teamId == data.teamId)
         {
-            allyPos = Vector2{bot.position.x, bot.position.y};
+            int botI = (int)(bot.position.x * 4);
+            int botJ = (int)(bot.position.y * 4);
+            allyPos[0] = Vector2(botI, botJ);
+            allyPos[1] = Vector2(botI - 1, botJ);
+            allyPos[2] = Vector2(botI + 1, botJ);
+            allyPos[3] = Vector2(botI, botJ - 1);
+            allyPos[4] = Vector2(botI, botJ + 1);
         }
         // Handle enemies
         else
@@ -528,6 +550,8 @@ void reset()
     strat = Strat::NONE;
     for (uint8_t i = 0; i < 20; i++)
         deads[i] = {-1, -1};
+    for (uint8_t i = 0; i < 5; i++)
+        allyPos[i] = {-1, -1};
 }
 
 void initialize()
