@@ -121,8 +121,9 @@ inline float moduloPi(float a) // return angle in [-pi; pi]
 inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool emergency)
 {
     constexpr float POS_REACHED_THRESHOLD = 0.08;
+    RobotData data = gladiator->robot->getData();
 
-    auto posRaw = gladiator->robot->getData().position;
+    auto posRaw = data.position;
 
     Vector2 pos{posRaw.x, posRaw.y};
 
@@ -174,9 +175,9 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     {
         // float K1 = .7;
         // float K2 = 1.5;
-        float K1 = .4;        // .3 to .5
-        float K2 = 1.1;       // .9 to 1.2
-        float minSpeed = .15; // IDK
+        float K1 = .25;        // .3 to .5
+        float K2 = .7;       // .9 to 1.2
+        float minSpeed = .13; // IDK
 
         // rotate
         rightCommand = angleError * K1;
@@ -186,6 +187,9 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
         rightCommand += factor + minSpeed; //+angleError*0.1  => terme optionel, "pseudo correction angulaire";
         leftCommand += factor + minSpeed;  //-angleError*0.1   => terme optionel, "pseudo correction angulaire";
     }
+
+    leftCommand *= data.speedLimit;
+    rightCommand *= data.speedLimit;
 
     if (direction)
     {
