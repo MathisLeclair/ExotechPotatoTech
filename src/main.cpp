@@ -72,7 +72,7 @@ uint64_t timestamp;
 uint64_t tick = 0;
 RobotData initRobotData;
 
-Vector2 deads[4];
+Vector2 deads[20];
 
 void fillMap()
 {
@@ -381,7 +381,7 @@ bool squareIsOutsideOfMap(int i, int j)
 bool squareWithDeadBodies(int i, int j)
 {
     Vector2 v = Vector2(i, j);
-    for (uint8_t i = 0; i < 4; i++)
+    for (uint8_t i = 0; i < 20; i++)
     {
         if (deads[i] == v)
         {
@@ -455,7 +455,11 @@ void getEnemies()
         // Skip dead enemies and teammates
         if (enemy.lifes == 0)
         {
-            deads[i] = Vector2((int)(enemy.position.x * 4), (int)(enemy.position.y * 4));
+            deads[i * 4] = Vector2((int)(enemy.position.x * 4), (int)(enemy.position.y * 4));
+            deads[i * 4 + 1] = Vector2((int)(enemy.position.x * 4) - 1, (int)(enemy.position.y * 4));
+            deads[i * 4 + 2] = Vector2((int)(enemy.position.x * 4) + 1, (int)(enemy.position.y * 4));
+            deads[i * 4 + 3] = Vector2((int)(enemy.position.x * 4), (int)(enemy.position.y * 4) - 1);
+            deads[i * 4 + 4] = Vector2((int)(enemy.position.x * 4), (int)(enemy.position.y * 4) + 1);
             // gladiator->log("new deads[%d][x]=%f deads[%d][y]=%f, raw: %f %f", i, deads[i].x(), i, deads[i].y(), enemy.position.x, enemy.position.y);
         }
         else if (enemy.teamId == data.teamId)
@@ -516,6 +520,8 @@ void reset()
     path = q + 143;
     *path = nullptr;
     strat = Strat::NONE;
+    for (uint8_t i = 0; i < 20; i++)
+        deads[i] = {-1, -1};
 }
 
 void initialize()
