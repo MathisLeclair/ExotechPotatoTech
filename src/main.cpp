@@ -174,8 +174,8 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     {
         // float K1 = .7;
         // float K2 = 1.5;
-        float K1 = .5;
-        float K2 = 1.2;
+        float K1 = .45;
+        float K2 = 1.1;
 
         // rotate
         rightCommand = angleError * K1;
