@@ -491,19 +491,19 @@ void checkEnemies()
     Position robotPos = gladiator->robot->getData().position;
     Vector2 posUs{robotPos.x, robotPos.y};
 
-    if (gladiator->weapon->canLaunchRocket() && enemiesDist[0] < .9 &&
+    if (gladiator->weapon->canLaunchRocket() && enemiesDist[0] < .7 &&
         abs(moduloPi((enemyPos[0] - posUs).angle() - robotPos.a)) < M_PI / 32)
     {
         gladiator->weapon->launchRocket();
     }
-    else if (gladiator->weapon->canLaunchRocket() && enemiesDist[1] < .9 &&
+    else if (gladiator->weapon->canLaunchRocket() && enemiesDist[1] < .7 &&
              abs(moduloPi((enemyPos[1] - posUs).angle() - robotPos.a)) < M_PI / 32)
     {
         gladiator->weapon->launchRocket();
     }
-    else if (enemiesDist[0] < 0.5 || enemiesDist[1] < 0.5)
+    else if (enemiesDist[0] < 0.7 || enemiesDist[1] < 0.7)
     {
-        if (enemiesDist[0] < 0.17 || enemiesDist[1] < 0.17)
+        if (enemiesDist[0] < 0.2 || enemiesDist[1] < 0.2)
             strat = Strat::SPIN;
         else
             strat = Strat::ATTACK;
@@ -518,7 +518,7 @@ void checkEnemies()
 void reset()
 {
     tick = 0;
-    timestamp = timeSinceEpochMillisec() - 2000;
+    timestamp = timeSinceEpochMillisec() - 2500;
     initiated = false;
     path = q + 143;
     *path = nullptr;
