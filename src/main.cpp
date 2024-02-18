@@ -72,7 +72,7 @@ uint64_t timestamp;
 uint64_t tick = 0;
 RobotData initRobotData;
 
-Vector2 allyPos[5];
+Vector2 allyPos[9];
 Vector2 deads[20];
 
 void fillMap()
@@ -174,8 +174,8 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     {
         // float K1 = .7;
         // float K2 = 1.5;
-        float K1 = .45;
-        float K2 = 1.1;
+        float K1 = .45; // .3 to .5
+        float K2 = 1.1; // .9 to 1.2
 
         // rotate
         rightCommand = angleError * K1;
@@ -395,7 +395,7 @@ bool squareWithDeadBodies(int i, int j)
 bool squareWithAlly(int i, int j)
 {
     Vector2 v = Vector2(i, j);
-    for (uint8_t i = 0; i < 5; i++)
+    for (uint8_t i = 0; i < 9; i++)
     {
         if (allyPos[i] == v)
         {
@@ -490,6 +490,10 @@ void getOtherRobotInfos()
             allyPos[2] = Vector2(botI + 1, botJ);
             allyPos[3] = Vector2(botI, botJ - 1);
             allyPos[4] = Vector2(botI, botJ + 1);
+            allyPos[4] = Vector2(botI + 1, botJ + 1);
+            allyPos[4] = Vector2(botI - 1, botJ - 1);
+            allyPos[4] = Vector2(botI + 1, botJ - 1);
+            allyPos[4] = Vector2(botI - 1, botJ + 1);
         }
         // Handle enemies
         else
@@ -516,19 +520,22 @@ void checkEnemies()
     Position robotPos = gladiator->robot->getData().position;
     Vector2 posUs{robotPos.x, robotPos.y};
 
-    if (gladiator->weapon->canLaunchRocket() && enemiesDist[0] < .7 &&
+    float disToLaunch = .6; // .5 to .7
+    float disToKILL = .7;   //.5 to 1
+    float disToSpin = .2;   //.15 to .22
+    if (gladiator->weapon->canLaunchRocket() && enemiesDist[0] < disToLaunch &&
         abs(moduloPi((enemyPos[0] - posUs).angle() - robotPos.a)) < M_PI / 32)
     {
         gladiator->weapon->launchRocket();
     }
-    else if (gladiator->weapon->canLaunchRocket() && enemiesDist[1] < .7 &&
+    else if (gladiator->weapon->canLaunchRocket() && enemiesDist[1] < disToLaunch &&
              abs(moduloPi((enemyPos[1] - posUs).angle() - robotPos.a)) < M_PI / 32)
     {
         gladiator->weapon->launchRocket();
     }
-    else if (enemiesDist[0] < 0.7 || enemiesDist[1] < 0.7)
+    else if (enemiesDist[0] < disToKILL || enemiesDist[1] < disToKILL)
     {
-        if (enemiesDist[0] < 0.2 || enemiesDist[1] < 0.2)
+        if (enemiesDist[0] < disToSpin || enemiesDist[1] < disToSpin)
             strat = Strat::SPIN;
         else
             strat = Strat::ATTACK;
@@ -599,15 +606,14 @@ void attack(int i)
 
     if (abs(moduloPi((enemyPos[i] - posUs).angle() - robotPos.a)) > M_PI / 4)
     {
-        gladiator->control->setWheelSpeed(WheelAxis::LEFT, -(moduloPi((enemyPos[i] - posUs).angle() - robotPos.a)) / 3);
-        gladiator->control->setWheelSpeed(WheelAxis::RIGHT, (moduloPi((enemyPos[i] - posUs).angle() - robotPos.a)) / 3);
+        gladiator->control->setWheelSpeed(WheelAxis::LEFT, -(moduloPi((enemyPos[i] - posUs).angle() - robotPos.a)) / 2);
+        gladiator->control->setWheelSpeed(WheelAxis::RIGHT, (moduloPi((enemyPos[i] - posUs).angle() - robotPos.a)) / 2);
     }
     else
         aim(gladiator, enemyPos[i], false, true);
 }
 
 // todo: esquive de missiles
-// todo: esquive d'allié
 // todo: si angle tir almost exact, tourner tirer
 // todo: opti code
 // todo: deblocage robot sur nous
@@ -632,7 +638,14 @@ void loop()
         {
             if (verySlowLoop())
                 checkOOB();
-            aim(gladiator, MiddlePos, false, true);
+            auto robotPos = gladiator->robot->getData().position;
+            Vector2 posUs{robotPos.x, robotPos.y};
+            float distToMiddle = (MiddlePos - posUs).norm2();
+
+            if (distToMiddle > 1)
+                aim(gladiator, MiddlePos, false, true);
+            else
+                aim(gladiator, Vector2(0, 0), false, true);
         }
         else if (strat == Strat::ESCAPE)
         {
