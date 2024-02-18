@@ -464,8 +464,11 @@ void getOtherRobotInfos()
             deads[i * 4 + 4] = Vector2((int)(bot.position.x * 4), (int)(bot.position.y * 4) + 1);
             // gladiator->log("new deads[%d][x]=%f deads[%d][y]=%f, raw: %f %f", i, deads[i].x(), i, deads[i].y(), enemy.position.x, enemy.position.y);
         }
+        // Handle ally
         else if (bot.teamId == data.teamId)
-            continue;
+        {
+            allyPos = Vector2{bot.position.x, bot.position.y};
+        }
         // Handle enemies
         else
         {
