@@ -57,7 +57,8 @@ enum Strat
     ESCAPE,
     ATTACK,
     SPIN,
-    SHOOT
+    SHOOT,
+    WALL,
 };
 
 Strat strat = Strat::NONE;
@@ -188,8 +189,17 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
         leftCommand += factor + minSpeed;  //-angleError*0.1   => terme optionel, "pseudo correction angulaire";
     }
 
-    leftCommand *= data.speedLimit;
-    rightCommand *= data.speedLimit;
+    if (data.speedLimit < 0.9)
+    {
+        float multiplier;
+        if (leftCommand > rightCommand)
+            multiplier = data.speedLimit / leftCommand;
+        else
+            multiplier = data.speedLimit / leftCommand;
+
+        leftCommand *= multiplier;
+        rightCommand *= multiplier;
+    }
 
     if (direction)
     {
@@ -459,6 +469,22 @@ void checkOOB()
         strat = Strat::NONE;
 }
 
+Vector2 checkWallAimPos{1.5, 1.5};
+void checkWall()
+{
+    if (strat == Strat::OOB)
+        return;
+    RobotData data = gladiator->robot->getData();
+    if (data.speedLimit < 1.0)
+    {
+        strat = Strat::WALL;
+        const MazeSquare *square = gladiator->maze->getNearestSquare();
+        checkWallAimPos = Vector2{(float)(square->i + 0.5) / 4.0F, (float)(square->j + 0.5) / 4.0F};
+    }
+    else if (strat == Strat::WALL)
+        strat = Strat::NONE;
+}
+
 Vector2 enemyPos[2];
 float enemiesDist[2];
 void getOtherRobotInfos()
@@ -632,7 +658,10 @@ void loop()
         tick++;
 
         if (strat != Strat::OOB && fastLoop())
+        {
             checkOOB();
+            checkWall();
+        }
         if (slowLoop())
         {
             getOtherRobotInfos();
@@ -651,6 +680,10 @@ void loop()
                 aim(gladiator, MiddlePos, false, true);
             else
                 aim(gladiator, Vector2(0, 0), false, true);
+        }
+        else if (strat == Strat::WALL)
+        {
+            aim(gladiator, checkWallAimPos, false, true);
         }
         else if (strat == Strat::ESCAPE)
         {
