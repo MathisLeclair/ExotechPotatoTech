@@ -176,8 +176,8 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     {
         // float K1 = .7;
         // float K2 = 1.5;
-        float K1 = .25;        // .3 to .5
-        float K2 = .7;       // .9 to 1.2
+        float K1 = .25;       // .3 to .5
+        float K2 = .7;        // .9 to 1.2
         float minSpeed = .13; // IDK
 
         // rotate
@@ -192,10 +192,14 @@ inline bool aim(Gladiator *gladiator, const Vector2 &target, bool showLogs, bool
     if (data.speedLimit < 0.9)
     {
         float multiplier;
+        if (leftCommand == 0)
+            leftCommand = .001F;
+        if (rightCommand == 0)
+            rightCommand = .001F;
         if (leftCommand > rightCommand)
             multiplier = data.speedLimit / leftCommand;
         else
-            multiplier = data.speedLimit / leftCommand;
+            multiplier = data.speedLimit / rightCommand;
 
         leftCommand *= multiplier;
         rightCommand *= multiplier;
@@ -345,7 +349,7 @@ bool checkSquare(const MazeSquare **&qend, const MazeSquare *square, const MazeS
     history[square->i][square->j] = depopSquare;
     if (isDangerous(square->i, square->j))
     {
-        gladiator->log("square is dangeros fuck off %d %d", square->i, square->j);
+        gladiator->log("square is dangerous fuck off %d %d", square->i, square->j);
         return false;
     }
     *qend = square;
@@ -475,14 +479,17 @@ void checkWall()
     if (strat == Strat::OOB)
         return;
     RobotData data = gladiator->robot->getData();
-    if (data.speedLimit < 1.0)
+    if (!(strat == Strat::WALL) && data.speedLimit < 1.0)
     {
-        strat = Strat::WALL;
         const MazeSquare *square = gladiator->maze->getNearestSquare();
-        checkWallAimPos = Vector2{(float)(square->i + 0.5) / 4.0F, (float)(square->j + 0.5) / 4.0F};
+        checkWallAimPos = Vector2{((float)square->i + 0.5F) / 4.0F, ((float)square->j + 0.5F) / 4.0F};
+        strat = Strat::WALL;
     }
     else if (strat == Strat::WALL)
+    {
+        cout << "stop wall" << endl;
         strat = Strat::NONE;
+    }
 }
 
 Vector2 enemyPos[2];
@@ -581,7 +588,7 @@ void checkEnemies()
 void reset()
 {
     tick = 0;
-    timestamp = timeSinceEpochMillisec() - 2500;
+    timestamp = timeSinceEpochMillisec() - 2000;
     initiated = false;
     path = q + 143;
     *path = nullptr;
@@ -674,9 +681,10 @@ void loop()
                 checkOOB();
             auto robotPos = gladiator->robot->getData().position;
             Vector2 posUs{robotPos.x, robotPos.y};
-            float distToMiddle = (MiddlePos - posUs).norm2();
+            Vector2 mid = MiddlePos - posUs;
+            float distToMiddle = mid.norm2();
 
-            if (distToMiddle > 1)
+            if (distToMiddle > 0.4)
                 aim(gladiator, MiddlePos, false, true);
             else
                 aim(gladiator, Vector2(0, 0), false, true);
@@ -703,8 +711,6 @@ void loop()
         }
         else if (strat == Strat::GOTO)
         {
-            // checkEscape();
-
             if (followPath())
                 strat = Strat::NONE;
         }
@@ -712,11 +718,11 @@ void loop()
         if (strat == Strat::NONE)
         {
             // Check if robot has rocket
-            if (!gladiator->weapon->canLaunchRocket() && coinsExist())
+            if (!(gladiator->weapon->canLaunchRocket()) && coinsExist())
             {
                 gotoPoints(true);
                 // If rocket path failed, try points instead
-                if (strat == Strat::OOB)
+                if (strat != Strat::GOTO)
                     gotoPoints(false);
             }
             else
